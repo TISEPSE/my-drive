@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Recent Activity View</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#258cf4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1A2633",
+                        "border-dark": "#283039",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
+<div class="flex h-screen w-full overflow-hidden">
+<aside class="w-64 flex-shrink-0 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-border-dark flex flex-col z-20">
+<div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-border-dark">
+<div class="flex items-center gap-3 text-primary">
+<span class="material-symbols-outlined text-3xl">cloud_circle</span>
+<h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">CloudSpace</h1>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-1">
+<div class="mb-6 px-1">
+<button class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>New Upload</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<p class="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 mt-2">Storage</p>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                    Dashboard
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">folder</span>
+                    My Drive
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">group</span>
+                    Shared with me
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-surface-dark text-primary dark:text-white font-medium" href="#">
+<span class="material-symbols-outlined fill-current">schedule</span>
+                    Recent
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">star</span>
+                    Starred
+                </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">delete</span>
+                    Trash
+                </a>
+</div>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-border-dark">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Storage</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">75% used</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-border-dark rounded-full h-1.5 mb-2">
+<div class="bg-primary h-1.5 rounded-full" style="width: 75%"></div>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-500">15 GB of 20 GB used</p>
+<button class="mt-3 w-full py-1.5 text-xs font-medium text-primary border border-primary/30 rounded hover:bg-primary/5 transition-colors">Upgrade Plan</button>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
+<header class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark z-10">
+<div class="flex-1 max-w-xl">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2 rounded-lg bg-slate-100 dark:bg-surface-dark border-none text-slate-900 dark:text-white placeholder-slate-500 focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Search recent files..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 ml-4">
+<button class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200 dark:bg-border-dark mx-1"></div>
+<button class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<div class="w-8 h-8 rounded-full bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAbbi0uVljWvZnQjscABsRhIzS4302zv-Mpkn-qHZjfwXP162oTDH_IDiZJL_ZnKEsduz94PHeQErrxDRWo9b7aylKFlVLpdwjtedQFeuZW1DkxwzT5ygp8eixb1BV8YBIYNdiK6R2oq-baR35S4cQHTFx7ynMTsj_18z0vHTEdoOsHCW_4XdICZNNw1UpEfKdlt8n4yxPlf0dp40zpA5-HjFNHlRh3BwLlZQQg07fQQka0s26D5PrmF8DAZawcenvXbDtz3uPY-wvt');"></div>
+<span class="text-sm font-medium text-slate-700 dark:text-white hidden sm:block">Alex D.</span>
+<span class="material-symbols-outlined text-slate-400 text-lg">expand_more</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-6 md:p-8">
+<div class="flex items-center justify-between mb-6">
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white">Recent Activity</h2>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-lg">tune</span>
+                        Properties
+                    </button>
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-lg">filter_list</span>
+                        Filter
+                    </button>
+</div>
+</div>
+<div class="flex items-center px-6 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+<div class="w-[45%]">Name</div>
+<div class="w-[20%] hidden sm:block">Owner</div>
+<div class="w-[25%] hidden md:block">Activity</div>
+<div class="w-[10%]"></div>
+</div>
+<div class="mb-8">
+<div class="flex items-center gap-2 mb-3 ml-2">
+<span class="material-symbols-outlined text-primary text-sm">calendar_today</span>
+<h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">Today</h3>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse table-fixed">
+<tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4 w-[45%]">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-blue-100 dark:bg-blue-900/40 rounded-lg text-blue-600 dark:text-blue-400">
+<span class="material-symbols-outlined text-2xl">description</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Project_Brief_v3.docx</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Edited 10:42 AM</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 w-[20%] hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAbbi0uVljWvZnQjscABsRhIzS4302zv-Mpkn-qHZjfwXP162oTDH_IDiZJL_ZnKEsduz94PHeQErrxDRWo9b7aylKFlVLpdwjtedQFeuZW1DkxwzT5ygp8eixb1BV8YBIYNdiK6R2oq-baR35S4cQHTFx7ynMTsj_18z0vHTEdoOsHCW_4XdICZNNw1UpEfKdlt8n4yxPlf0dp40zpA5-HjFNHlRh3BwLlZQQg07fQQka0s26D5PrmF8DAZawcenvXbDtz3uPY-wvt')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">You</span>
+</div>
+</td>
+<td class="px-6 py-4 w-[25%] hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Edited 10:42 AM</span>
+</td>
+<td class="px-6 py-4 w-[10%] text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-orange-100 dark:bg-orange-900/40 rounded-lg text-orange-600 dark:text-orange-400">
+<span class="material-symbols-outlined text-2xl">slideshow</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Q4_Kickoff_Deck.pptx</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Viewed 9:15 AM</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHKuDKyP8e7T23Ybs6EL1rIgzbJTWsi-abvZFWC7DgTNU8BpkiPQpSBUml21tpDk6Mhy6Oqs4FQ8fq6SWwPKZXou_KqYrJMGTIrf_9aHaQYhkYdMM6j0EI_hLHiSIGupofXZp2pmFS6ljuvtv8dM-eNC__Lh_u3yNdMKQd-kCMFrhUFmzxIOBmw_kdNhpsV7PTU0PeZihgh4v3q_UQSPIyqdwDoGPWQPXNtjscpZs7lKXFvUau8_uQkjzUXPCHUAEYuMJo7-9TxuCR')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Sarah M.</span>
+</div>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Viewed 9:15 AM</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-green-100 dark:bg-green-900/40 rounded-lg text-green-600 dark:text-green-400">
+<span class="material-symbols-outlined text-2xl">table_chart</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Marketing_Budget.xlsx</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Uploaded 8:30 AM</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDbbYnkPvH_O_VySrm0x8wGLfzO4Nmtp-QDaPWtYIJLoP-YXueR3rM0vfI5SNLEdIIzBE1z3lQMNyocIKEuAUjbAwx5XSuWP7eGLhTixPX5yzV5fE-WiY20LNwkyb8y6IvtsBRMsJw0Y42IT95K-7wgMRF4yJh9elU8qy_MCH0le-t5A_2wmpdMkOW_--poz4KS-fKvpo6KeKlYAcgUZv_8dqh1fmn3WCq5TbUy9G6uSKVi9bhcNhMJj7Alvj9nLEAeIIsfWQNC6fD_')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Mike R.</span>
+</div>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Uploaded 8:30 AM</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="mb-8">
+<div class="flex items-center gap-2 mb-3 ml-2">
+<span class="material-symbols-outlined text-slate-400 text-sm">history</span>
+<h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">Yesterday</h3>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse table-fixed">
+<tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4 w-[45%]">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-purple-100 dark:bg-purple-900/40 rounded-lg text-purple-600 dark:text-purple-400">
+<span class="material-symbols-outlined text-2xl">image</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Logo_Redesign_Final.fig</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Edited 4:20 PM</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 w-[20%] hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDdpb-JLuExw81_elAeLL3mebYFPgmpurMyDQsCUz1yKijAePX52u6lrOH01qEY8pVRqbEYvOi6obtT6B89SiPSFO_1cvBXCpTTmdckcUqNpD6So-LCTn7bgGQLViBWbxpAcHMfySB4po6OOLrAg8HUl_wu4NMSa2B5I7xytAiReI0Hvolg7rJbUA4lMJPaCSSymktYrQv2JEGfcdYe04JLi8AjTq9qIN3IIhQQ5j82Rd4HYMFkN3z2gvf9nlaQ52ft3xHImbnBCDFD')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Design Team</span>
+</div>
+</td>
+<td class="px-6 py-4 w-[25%] hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Edited 4:20 PM</span>
+</td>
+<td class="px-6 py-4 w-[10%] text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-red-100 dark:bg-red-900/40 rounded-lg text-red-600 dark:text-red-400">
+<span class="material-symbols-outlined text-2xl">picture_as_pdf</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Contract_Signed.pdf</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Modified 2:10 PM</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHKuDKyP8e7T23Ybs6EL1rIgzbJTWsi-abvZFWC7DgTNU8BpkiPQpSBUml21tpDk6Mhy6Oqs4FQ8fq6SWwPKZXou_KqYrJMGTIrf_9aHaQYhkYdMM6j0EI_hLHiSIGupofXZp2pmFS6ljuvtv8dM-eNC__Lh_u3yNdMKQd-kCMFrhUFmzxIOBmw_kdNhpsV7PTU0PeZihgh4v3q_UQSPIyqdwDoGPWQPXNtjscpZs7lKXFvUau8_uQkjzUXPCHUAEYuMJo7-9TxuCR')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Legal</span>
+</div>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Modified 2:10 PM</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="mb-8">
+<div class="flex items-center gap-2 mb-3 ml-2">
+<span class="material-symbols-outlined text-slate-400 text-sm">date_range</span>
+<h3 class="text-sm font-bold text-slate-700 dark:text-slate-300">Last Week</h3>
+</div>
+<div class="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden shadow-sm">
+<table class="w-full text-left border-collapse table-fixed">
+<tbody class="divide-y divide-slate-100 dark:divide-border-dark">
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4 w-[45%]">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-yellow-100 dark:bg-yellow-900/40 rounded-lg text-yellow-600 dark:text-yellow-400">
+<span class="material-symbols-outlined text-2xl">folder</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Campaign_Assets_2024</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Edited Oct 24</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 w-[20%] hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDbbYnkPvH_O_VySrm0x8wGLfzO4Nmtp-QDaPWtYIJLoP-YXueR3rM0vfI5SNLEdIIzBE1z3lQMNyocIKEuAUjbAwx5XSuWP7eGLhTixPX5yzV5fE-WiY20LNwkyb8y6IvtsBRMsJw0Y42IT95K-7wgMRF4yJh9elU8qy_MCH0le-t5A_2wmpdMkOW_--poz4KS-fKvpo6KeKlYAcgUZv_8dqh1fmn3WCq5TbUy9G6uSKVi9bhcNhMJj7Alvj9nLEAeIIsfWQNC6fD_')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Marketing</span>
+</div>
+</td>
+<td class="px-6 py-4 w-[25%] hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Edited Oct 24</span>
+</td>
+<td class="px-6 py-4 w-[10%] text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-gray-100 dark:bg-gray-800 rounded-lg text-gray-600 dark:text-gray-400">
+<span class="material-symbols-outlined text-2xl">folder_zip</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Source_Code_Backup.zip</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Uploaded Oct 22</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAbbi0uVljWvZnQjscABsRhIzS4302zv-Mpkn-qHZjfwXP162oTDH_IDiZJL_ZnKEsduz94PHeQErrxDRWo9b7aylKFlVLpdwjtedQFeuZW1DkxwzT5ygp8eixb1BV8YBIYNdiK6R2oq-baR35S4cQHTFx7ynMTsj_18z0vHTEdoOsHCW_4XdICZNNw1UpEfKdlt8n4yxPlf0dp40zpA5-HjFNHlRh3BwLlZQQg07fQQka0s26D5PrmF8DAZawcenvXbDtz3uPY-wvt')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">You</span>
+</div>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Uploaded Oct 22</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+<tr class="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+<td class="px-6 py-4">
+<div class="flex items-center gap-4">
+<div class="relative w-10 h-10 flex-shrink-0 flex items-center justify-center bg-indigo-100 dark:bg-indigo-900/40 rounded-lg text-indigo-600 dark:text-indigo-400">
+<span class="material-symbols-outlined text-2xl">image</span>
+</div>
+<div class="min-w-0">
+<p class="text-sm font-medium text-slate-900 dark:text-white truncate">Team_Offsite_Photo.jpg</p>
+<p class="text-xs text-slate-500 dark:text-slate-400 md:hidden">Viewed Oct 20</p>
+</div>
+</div>
+</td>
+<td class="px-6 py-4 hidden sm:table-cell">
+<div class="flex items-center gap-2">
+<div class="w-6 h-6 rounded-full bg-cover border border-slate-200 dark:border-border-dark" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHKuDKyP8e7T23Ybs6EL1rIgzbJTWsi-abvZFWC7DgTNU8BpkiPQpSBUml21tpDk6Mhy6Oqs4FQ8fq6SWwPKZXou_KqYrJMGTIrf_9aHaQYhkYdMM6j0EI_hLHiSIGupofXZp2pmFS6ljuvtv8dM-eNC__Lh_u3yNdMKQd-kCMFrhUFmzxIOBmw_kdNhpsV7PTU0PeZihgh4v3q_UQSPIyqdwDoGPWQPXNtjscpZs7lKXFvUau8_uQkjzUXPCHUAEYuMJo7-9TxuCR')"></div>
+<span class="text-sm text-slate-600 dark:text-slate-300">Sarah M.</span>
+</div>
+</td>
+<td class="px-6 py-4 hidden md:table-cell">
+<span class="text-sm text-slate-500 dark:text-slate-400">Viewed Oct 20</span>
+</td>
+<td class="px-6 py-4 text-right">
+<button class="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+<span class="material-symbols-outlined">more_vert</span>
+</button>
+</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+<div class="mt-8 flex justify-center pb-8">
+<button class="text-sm text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors font-medium">Load more history...</button>
+</div>
+</div>
+</main>
+</div>
+
+</body></html>

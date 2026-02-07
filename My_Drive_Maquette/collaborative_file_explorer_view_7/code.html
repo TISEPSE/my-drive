@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Starred Favorites View</title>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com" rel="preconnect"/>
+<link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect"/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&amp;display=swap" rel="stylesheet"/>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#258cf4",
+                        "background-light": "#f5f7f8",
+                        "background-dark": "#101922",
+                        "surface-dark": "#1A2633",
+                        "border-dark": "#283039",
+                    },
+                    fontFamily: {
+                        "display": ["Inter", "sans-serif"]
+                    },
+                    borderRadius: {"DEFAULT": "0.25rem", "lg": "0.5rem", "xl": "0.75rem", "full": "9999px"},
+                },
+            },
+        }
+    </script>
+<style>
+    .material-symbols-filled {
+        font-variation-settings: 'FILL' 1;
+    }
+</style>
+</head>
+<body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
+<div class="flex h-screen w-full overflow-hidden">
+<aside class="w-64 flex-shrink-0 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-border-dark flex flex-col z-20">
+<div class="h-16 flex items-center px-6 border-b border-slate-200 dark:border-border-dark">
+<div class="flex items-center gap-3 text-primary">
+<span class="material-symbols-outlined text-3xl">cloud_circle</span>
+<h1 class="text-slate-900 dark:text-white text-lg font-bold tracking-tight">CloudSpace</h1>
+</div>
+</div>
+<nav class="flex-1 overflow-y-auto py-6 px-3 flex flex-col gap-1">
+<div class="mb-6 px-1">
+<button class="w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-lg shadow-blue-500/20 transition-all">
+<span class="material-symbols-outlined">add</span>
+<span>New Upload</span>
+</button>
+</div>
+<div class="flex flex-col gap-1">
+<p class="px-3 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider mb-2 mt-2">Storage</p>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+                        Dashboard
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">folder</span>
+                        My Drive
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">group</span>
+                        Shared with me
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">schedule</span>
+                        Recent
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-slate-100 dark:bg-surface-dark text-primary dark:text-white font-medium" href="#">
+<span class="material-symbols-filled text-amber-500 material-symbols-outlined">star</span>
+                        Starred
+                    </a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark transition-colors font-medium" href="#">
+<span class="material-symbols-outlined">delete</span>
+                        Trash
+                    </a>
+</div>
+</nav>
+<div class="p-4 border-t border-slate-200 dark:border-border-dark">
+<div class="flex items-center justify-between mb-2">
+<span class="text-sm font-medium text-slate-700 dark:text-slate-300">Storage</span>
+<span class="text-xs text-slate-500 dark:text-slate-400">75% used</span>
+</div>
+<div class="w-full bg-slate-200 dark:bg-border-dark rounded-full h-1.5 mb-2">
+<div class="bg-primary h-1.5 rounded-full" style="width: 75%"></div>
+</div>
+<p class="text-xs text-slate-500 dark:text-slate-500">15 GB of 20 GB used</p>
+<button class="mt-3 w-full py-1.5 text-xs font-medium text-primary border border-primary/30 rounded hover:bg-primary/5 transition-colors">Upgrade Plan</button>
+</div>
+</aside>
+<main class="flex-1 flex flex-col min-w-0 bg-background-light dark:bg-background-dark relative">
+<header class="h-16 flex items-center justify-between px-6 border-b border-slate-200 dark:border-border-dark bg-white dark:bg-background-dark z-10">
+<div class="flex-1 max-w-xl">
+<div class="relative group">
+<div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+<span class="material-symbols-outlined text-slate-400">search</span>
+</div>
+<input class="block w-full pl-10 pr-3 py-2 rounded-lg bg-slate-100 dark:bg-surface-dark border-none text-slate-900 dark:text-white placeholder-slate-500 focus:ring-2 focus:ring-primary sm:text-sm" placeholder="Search starred items..." type="text"/>
+</div>
+</div>
+<div class="flex items-center gap-4 ml-4">
+<button class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined">notifications</span>
+</button>
+<button class="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<span class="material-symbols-outlined">settings</span>
+</button>
+<div class="h-8 w-[1px] bg-slate-200 dark:bg-border-dark mx-1"></div>
+<button class="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+<div class="w-8 h-8 rounded-full bg-cover bg-center" data-alt="User profile avatar of a man smiling" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAbbi0uVljWvZnQjscABsRhIzS4302zv-Mpkn-qHZjfwXP162oTDH_IDiZJL_ZnKEsduz94PHeQErrxDRWo9b7aylKFlVLpdwjtedQFeuZW1DkxwzT5ygp8eixb1BV8YBIYNdiK6R2oq-baR35S4cQHTFx7ynMTsj_18z0vHTEdoOsHCW_4XdICZNNw1UpEfKdlt8n4yxPlf0dp40zpA5-HjFNHlRh3BwLlZQQg07fQQka0s26D5PrmF8DAZawcenvXbDtz3uPY-wvt');"></div>
+<span class="text-sm font-medium text-slate-700 dark:text-white hidden sm:block">Alex D.</span>
+<span class="material-symbols-outlined text-slate-400 text-lg">expand_more</span>
+</button>
+</div>
+</header>
+<div class="flex-1 overflow-y-auto p-6 md:p-8">
+<div class="flex items-center justify-between mb-8">
+<div class="flex items-center gap-3">
+<div class="p-2 rounded-lg bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-500">
+<span class="material-symbols-outlined material-symbols-filled">star</span>
+</div>
+<h2 class="text-2xl font-bold text-slate-900 dark:text-white">Starred</h2>
+</div>
+<div class="flex gap-2">
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-lg">sort</span>
+                            Sort by
+                        </button>
+<button class="flex items-center gap-2 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
+<span class="material-symbols-outlined text-lg">view_module</span>
+</button>
+</div>
+</div>
+<section class="mb-10">
+<h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">folder</span>
+                        Folders
+                    </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4 hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer relative">
+<div class="absolute top-4 right-4">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-xl">star</span>
+</div>
+<div class="mb-3">
+<span class="material-symbols-outlined text-4xl text-yellow-500 fill-current">folder</span>
+</div>
+<div class="min-w-0">
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate pr-6">Design System V2</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">48 items • 320 MB</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4 hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer relative">
+<div class="absolute top-4 right-4">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-xl">star</span>
+</div>
+<div class="mb-3">
+<span class="material-symbols-outlined text-4xl text-yellow-500 fill-current">folder</span>
+</div>
+<div class="min-w-0">
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate pr-6">Marketing 2024</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">126 items • 2.4 GB</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4 hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer relative">
+<div class="absolute top-4 right-4">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-xl">star</span>
+</div>
+<div class="mb-3">
+<div class="relative inline-block">
+<span class="material-symbols-outlined text-4xl text-indigo-500 fill-current">folder_shared</span>
+<div class="absolute -top-1 -right-1 bg-white dark:bg-surface-dark rounded-full p-[1px]">
+<span class="material-symbols-outlined text-xs text-slate-400">lock</span>
+</div>
+</div>
+</div>
+<div class="min-w-0">
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate pr-6">Financial Reports</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">12 items • Secure</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4 hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer relative">
+<div class="absolute top-4 right-4">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-xl">star</span>
+</div>
+<div class="mb-3">
+<span class="material-symbols-outlined text-4xl text-yellow-500 fill-current">folder</span>
+</div>
+<div class="min-w-0">
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate pr-6">Project Resources</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400 mt-1">8 items • 156 MB</p>
+</div>
+</div>
+</div>
+</section>
+<section>
+<h3 class="text-sm font-semibold text-slate-500 dark:text-slate-400 mb-4 uppercase tracking-wider flex items-center gap-2">
+<span class="material-symbols-outlined text-lg">description</span>
+                        Files
+                    </h3>
+<div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-5">
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer flex flex-col overflow-hidden">
+<div class="relative h-32 bg-slate-50 dark:bg-[#151e26] border-b border-slate-100 dark:border-border-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-red-500 dark:text-red-400">picture_as_pdf</span>
+<div class="absolute top-2 right-2 bg-white dark:bg-surface-dark rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-border-dark">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-sm block">star</span>
+</div>
+</div>
+<div class="p-3">
+<div class="flex items-center justify-between mb-1">
+<p class="text-xs font-semibold text-red-500 dark:text-red-400 uppercase tracking-wide">PDF</p>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate mb-1">Q3_Financial_Summary.pdf</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Updated 2h ago</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer flex flex-col overflow-hidden">
+<div class="relative h-32 bg-slate-50 dark:bg-[#151e26] border-b border-slate-100 dark:border-border-dark flex items-center justify-center group-hover:scale-105 transition-transform duration-500 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuCHKuDKyP8e7T23Ybs6EL1rIgzbJTWsi-abvZFWC7DgTNU8BpkiPQpSBUml21tpDk6Mhy6Oqs4FQ8fq6SWwPKZXou_KqYrJMGTIrf_9aHaQYhkYdMM6j0EI_hLHiSIGupofXZp2pmFS6ljuvtv8dM-eNC__Lh_u3yNdMKQd-kCMFrhUFmzxIOBmw_kdNhpsV7PTU0PeZihgh4v3q_UQSPIyqdwDoGPWQPXNtjscpZs7lKXFvUau8_uQkjzUXPCHUAEYuMJo7-9TxuCR')">
+<div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
+<div class="absolute top-2 right-2 bg-white dark:bg-surface-dark rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-border-dark">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-sm block">star</span>
+</div>
+</div>
+<div class="p-3">
+<div class="flex items-center justify-between mb-1">
+<p class="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide">IMG</p>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate mb-1">Hero_Banner_v4.jpg</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Updated yesterday</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer flex flex-col overflow-hidden">
+<div class="relative h-32 bg-slate-50 dark:bg-[#151e26] border-b border-slate-100 dark:border-border-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-blue-500 dark:text-blue-400">description</span>
+<div class="absolute top-2 right-2 bg-white dark:bg-surface-dark rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-border-dark">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-sm block">star</span>
+</div>
+</div>
+<div class="p-3">
+<div class="flex items-center justify-between mb-1">
+<p class="text-xs font-semibold text-blue-500 dark:text-blue-400 uppercase tracking-wide">DOC</p>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate mb-1">Project_Proposal_Draft.docx</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Updated Oct 24</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer flex flex-col overflow-hidden">
+<div class="relative h-32 bg-slate-50 dark:bg-[#151e26] border-b border-slate-100 dark:border-border-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-green-500 dark:text-green-400">table_chart</span>
+<div class="absolute top-2 right-2 bg-white dark:bg-surface-dark rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-border-dark">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-sm block">star</span>
+</div>
+</div>
+<div class="p-3">
+<div class="flex items-center justify-between mb-1">
+<p class="text-xs font-semibold text-green-500 dark:text-green-400 uppercase tracking-wide">XLS</p>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate mb-1">Annual_Budget_2024.xlsx</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Updated Oct 20</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer flex flex-col overflow-hidden">
+<div class="relative h-32 bg-slate-50 dark:bg-[#151e26] border-b border-slate-100 dark:border-border-dark flex items-center justify-center group-hover:scale-105 transition-transform duration-500 bg-cover bg-center" style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDdpb-JLuExw81_elAeLL3mebYFPgmpurMyDQsCUz1yKijAePX52u6lrOH01qEY8pVRqbEYvOi6obtT6B89SiPSFO_1cvBXCpTTmdckcUqNpD6So-LCTn7bgGQLViBWbxpAcHMfySB4po6OOLrAg8HUl_wu4NMSa2B5I7xytAiReI0Hvolg7rJbUA4lMJPaCSSymktYrQv2JEGfcdYe04JLi8AjTq9qIN3IIhQQ5j82Rd4HYMFkN3z2gvf9nlaQ52ft3xHImbnBCDFD')">
+<div class="absolute inset-0 bg-black/10 group-hover:bg-black/0 transition-colors"></div>
+<div class="absolute top-2 right-2 bg-white dark:bg-surface-dark rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-border-dark">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-sm block">star</span>
+</div>
+</div>
+<div class="p-3">
+<div class="flex items-center justify-between mb-1">
+<p class="text-xs font-semibold text-indigo-500 dark:text-indigo-400 uppercase tracking-wide">IMG</p>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate mb-1">Office_Layout.png</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Updated Oct 15</p>
+</div>
+</div>
+<div class="group bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl hover:shadow-lg hover:border-primary/50 dark:hover:border-primary/50 transition-all cursor-pointer flex flex-col overflow-hidden">
+<div class="relative h-32 bg-slate-50 dark:bg-[#151e26] border-b border-slate-100 dark:border-border-dark flex items-center justify-center">
+<span class="material-symbols-outlined text-5xl text-purple-500 dark:text-purple-400">video_file</span>
+<div class="absolute top-2 right-2 bg-white dark:bg-surface-dark rounded-full p-1.5 shadow-sm border border-slate-100 dark:border-border-dark">
+<span class="material-symbols-outlined material-symbols-filled text-amber-400 text-sm block">star</span>
+</div>
+</div>
+<div class="p-3">
+<div class="flex items-center justify-between mb-1">
+<p class="text-xs font-semibold text-purple-500 dark:text-purple-400 uppercase tracking-wide">MP4</p>
+<button class="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity"><span class="material-symbols-outlined text-lg">more_vert</span></button>
+</div>
+<h4 class="text-sm font-semibold text-slate-900 dark:text-white truncate mb-1">Product_Demo_Final.mp4</h4>
+<p class="text-xs text-slate-500 dark:text-slate-400">Updated Sep 28</p>
+</div>
+</div>
+</div>
+</section>
+</div>
+</main>
+</div>
+</body></html>
