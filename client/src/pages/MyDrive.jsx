@@ -1,26 +1,6 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import FileContextMenu from '../components/FileContextMenu'
 
-const folders = [
-  { name: 'Marketing Assets', items: 24, icon: 'folder', iconColor: 'text-yellow-500' },
-  { name: 'Product Design', items: 156, icon: 'folder', iconColor: 'text-yellow-500' },
-  { name: 'Financials 2024', items: 8, icon: 'folder', iconColor: 'text-yellow-500' },
-  { name: 'Personal', items: 42, icon: 'folder', iconColor: 'text-yellow-500' },
-  { name: 'Confidential', items: 3, icon: 'folder_shared', iconColor: 'text-indigo-500', locked: true },
-  { name: 'Clients', items: 12, icon: 'folder', iconColor: 'text-yellow-500' },
-]
-
-const files = [
-  { name: 'Logo_V2.fig', size: '2.4 MB', date: 'Today', icon: 'image', iconColor: 'text-indigo-500', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-indigo-50 dark:bg-indigo-500/10' },
-  { name: 'Q3_Report.pdf', size: '4.8 MB', date: 'Yesterday', icon: 'picture_as_pdf', iconColor: 'text-red-500', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-red-50 dark:bg-red-500/10' },
-  { name: 'Budget_2024.xlsx', size: '1.2 MB', date: 'Oct 20', icon: 'table_chart', iconColor: 'text-green-500', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-green-50 dark:bg-green-500/10' },
-  { name: 'Project_Brief.docx', size: '850 KB', date: 'Oct 18', icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-blue-50 dark:bg-blue-500/10' },
-  { name: 'Q4_Strategy.pptx', size: '12.5 MB', date: 'Oct 15', icon: 'slideshow', iconColor: 'text-orange-400', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-orange-50 dark:bg-orange-500/10' },
-  { name: 'Demo_Recording.mp4', size: '128 MB', date: 'Oct 12', icon: 'movie', iconColor: 'text-purple-500', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-purple-50 dark:bg-purple-500/10' },
-  { name: 'config.json', size: '4 KB', date: 'Oct 10', icon: 'code', iconColor: 'text-teal-400', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-teal-50 dark:bg-teal-500/10' },
-  { name: 'Archive_2023.zip', size: '450 MB', date: 'Sep 28', icon: 'folder_zip', iconColor: 'text-gray-400', iconBg: 'bg-slate-50 dark:bg-[#151e26]', typeBg: 'bg-gray-50 dark:bg-gray-500/10' },
-]
-
 const fileTypeIcons = {
   'image/': { icon: 'image', color: 'text-indigo-400' },
   'video/': { icon: 'movie', color: 'text-purple-400' },
@@ -52,42 +32,76 @@ export default function MyDrive() {
   const [dragFileCount, setDragFileCount] = useState(0)
   const [uploadQueue, setUploadQueue] = useState([])
   const [showUploadPanel, setShowUploadPanel] = useState(false)
+  const [folders, setFolders] = useState([])
+  const [files, setFiles] = useState([])
+  const [loading, setLoading] = useState(true)
   const dragCounterRef = useRef(0)
   const dropZoneRef = useRef(null)
 
-  // Simulate upload progress
+  const fetchContents = useCallback(async () => {
+    try {
+      const res = await fetch('/api/drive/contents')
+      const data = await res.json()
+      setFolders(data.folders || [])
+      setFiles(data.files || [])
+    } catch (err) {
+      console.error('Failed to fetch drive contents:', err)
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
-    if (uploadQueue.length === 0) return
-    const hasActive = uploadQueue.some(f => f.status === 'uploading' || f.status === 'pending')
-    if (!hasActive) return
+    fetchContents()
+  }, [fetchContents])
 
-    const interval = setInterval(() => {
-      setUploadQueue(prev => {
-        let changed = false
-        const next = prev.map(f => {
-          if (f.status === 'uploading') {
-            const newProgress = Math.min(f.progress + Math.random() * 15 + 5, 100)
-            changed = true
-            if (newProgress >= 100) {
-              return { ...f, progress: 100, status: 'done' }
-            }
-            return { ...f, progress: newProgress }
-          }
-          if (f.status === 'pending') {
-            const anyUploading = prev.some(x => x.status === 'uploading')
-            if (!anyUploading) {
-              changed = true
-              return { ...f, status: 'uploading', progress: Math.random() * 10 }
-            }
-          }
-          return f
+  const uploadFiles = useCallback(async (fileList) => {
+    const newUploads = fileList.map((file, i) => ({
+      id: Date.now() + i,
+      name: file.name,
+      size: file.size,
+      type: file.type,
+      file,
+      progress: 0,
+      status: 'pending',
+    }))
+
+    setUploadQueue(prev => [...newUploads, ...prev])
+    setShowUploadPanel(true)
+
+    for (const upload of newUploads) {
+      setUploadQueue(prev =>
+        prev.map(f => f.id === upload.id ? { ...f, status: 'uploading', progress: 10 } : f)
+      )
+
+      try {
+        const formData = new FormData()
+        formData.append('file', upload.file)
+
+        const res = await fetch('/api/files/upload', {
+          method: 'POST',
+          body: formData,
         })
-        return changed ? next : prev
-      })
-    }, 200)
 
-    return () => clearInterval(interval)
-  }, [uploadQueue])
+        if (res.ok) {
+          setUploadQueue(prev =>
+            prev.map(f => f.id === upload.id ? { ...f, progress: 100, status: 'done' } : f)
+          )
+        } else {
+          setUploadQueue(prev =>
+            prev.map(f => f.id === upload.id ? { ...f, status: 'error' } : f)
+          )
+        }
+      } catch {
+        setUploadQueue(prev =>
+          prev.map(f => f.id === upload.id ? { ...f, status: 'error' } : f)
+        )
+      }
+    }
+
+    // Refresh contents after all uploads
+    fetchContents()
+  }, [fetchContents])
 
   const handleDragEnter = useCallback((e) => {
     e.preventDefault()
@@ -123,19 +137,29 @@ export default function MyDrive() {
 
     const droppedFiles = Array.from(e.dataTransfer.files)
     if (droppedFiles.length === 0) return
+    uploadFiles(droppedFiles)
+  }, [uploadFiles])
 
-    const newUploads = droppedFiles.map((file, i) => ({
-      id: Date.now() + i,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      progress: 0,
-      status: i === 0 ? 'uploading' : 'pending',
-    }))
+  const handleCreateFolder = async () => {
+    const name = prompt('Folder name:')
+    if (!name || !name.trim()) return
 
-    setUploadQueue(prev => [...newUploads, ...prev])
-    setShowUploadPanel(true)
-  }, [])
+    try {
+      const res = await fetch('/api/drive/folders', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: name.trim(), parent_id: null }),
+      })
+      if (res.ok) {
+        fetchContents()
+      } else {
+        const err = await res.json()
+        alert(err.error || 'Failed to create folder')
+      }
+    } catch {
+      alert('Failed to create folder')
+    }
+  }
 
   const clearCompleted = () => {
     setUploadQueue(prev => prev.filter(f => f.status !== 'done'))
@@ -149,6 +173,20 @@ export default function MyDrive() {
   const completedCount = uploadQueue.filter(f => f.status === 'done').length
   const totalCount = uploadQueue.length
   const allDone = totalCount > 0 && completedCount === totalCount
+
+  if (loading) {
+    return (
+      <div className="flex-1 flex items-center justify-center">
+        <div className="flex items-center gap-3 text-slate-400">
+          <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+            <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+            <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+          </svg>
+          <span className="text-sm">Loading...</span>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div
@@ -316,6 +354,9 @@ export default function MyDrive() {
                           <span className="text-[10px] text-slate-500">{formatFileSize(file.size)}</span>
                         </div>
                       )}
+                      {file.status === 'error' && (
+                        <span className="text-[10px] text-red-400">Upload failed</span>
+                      )}
                     </div>
                   </div>
                 </div>
@@ -382,10 +423,10 @@ export default function MyDrive() {
         <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Folders</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {folders.map((folder) => (
-            <div key={folder.name} className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors shadow-sm group">
+            <div key={folder.id} className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors shadow-sm group">
               <div className="relative">
-                <span className={`material-symbols-outlined text-2xl ${folder.iconColor} mr-3`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
-                {folder.locked && (
+                <span className={`material-symbols-outlined text-2xl ${folder.icon_color} mr-3`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
+                {folder.is_locked && (
                   <div className="absolute -top-1 right-0 bg-white dark:bg-background-dark rounded-full">
                     <span className="material-symbols-outlined text-[10px] text-slate-400">lock</span>
                   </div>
@@ -393,14 +434,17 @@ export default function MyDrive() {
               </div>
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">{folder.name}</p>
-                <p className="text-xs text-slate-500 dark:text-slate-400">{folder.items} items</p>
+                <p className="text-xs text-slate-500 dark:text-slate-400">{folder.items_count} items</p>
               </div>
               <FileContextMenu className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity" />
             </div>
           ))}
 
           {/* Create New Folder */}
-          <div className="flex items-center p-3 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary group">
+          <div
+            onClick={handleCreateFolder}
+            className="flex items-center p-3 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary group"
+          >
             <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-surface-dark flex items-center justify-center mr-3 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
               <span className="material-symbols-outlined text-xl">add</span>
             </div>
@@ -419,14 +463,14 @@ export default function MyDrive() {
           /* Grid View */
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
             {files.map((file) => (
-              <div key={file.name} className="group relative bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg p-2 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
-                <div className={`aspect-[4/3] ${file.iconBg} rounded-md mb-2 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-border-dark`}>
-                  <span className={`material-symbols-outlined text-3xl ${file.iconColor} opacity-80 group-hover:scale-110 transition-transform duration-300`}>{file.icon}</span>
+              <div key={file.id} className="group relative bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg p-2 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
+                <div className={`aspect-[4/3] ${file.icon_bg} rounded-md mb-2 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-border-dark`}>
+                  <span className={`material-symbols-outlined text-3xl ${file.icon_color} opacity-80 group-hover:scale-110 transition-transform duration-300`}>{file.icon}</span>
                 </div>
                 <div className="flex justify-between items-start">
                   <div className="min-w-0 pr-1">
                     <p className="text-xs font-semibold text-slate-900 dark:text-white truncate" title={file.name}>{file.name}</p>
-                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{file.size} &bull; {file.date}</p>
+                    <p className="text-[11px] text-slate-500 dark:text-slate-400 mt-0.5">{file.formatted_size} &bull; {file.formatted_date}</p>
                   </div>
                   <FileContextMenu className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0">
                     <span className="material-symbols-outlined text-[16px]">more_vert</span>
@@ -450,12 +494,12 @@ export default function MyDrive() {
               <tbody className="divide-y divide-slate-100 dark:divide-border-dark">
                 {/* Folder rows */}
                 {folders.map((folder) => (
-                  <tr key={folder.name} className="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+                  <tr key={folder.id} className="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         <div className="relative flex-shrink-0">
-                          <span className={`material-symbols-outlined text-2xl ${folder.iconColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
-                          {folder.locked && (
+                          <span className={`material-symbols-outlined text-2xl ${folder.icon_color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
+                          {folder.is_locked && (
                             <div className="absolute -top-1 -right-1 bg-white dark:bg-surface-dark rounded-full">
                               <span className="material-symbols-outlined text-[10px] text-slate-400">lock</span>
                             </div>
@@ -463,7 +507,7 @@ export default function MyDrive() {
                         </div>
                         <div>
                           <p className="text-sm font-medium text-slate-900 dark:text-white">{folder.name}</p>
-                          <p className="text-xs text-slate-500 dark:text-slate-400">{folder.items} items</p>
+                          <p className="text-xs text-slate-500 dark:text-slate-400">{folder.items_count} items</p>
                         </div>
                       </div>
                     </td>
@@ -480,20 +524,20 @@ export default function MyDrive() {
                 ))}
                 {/* File rows */}
                 {files.map((file) => (
-                  <tr key={file.name} className="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+                  <tr key={file.id} className="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
-                        <div className={`w-8 h-8 rounded-lg ${file.typeBg} flex items-center justify-center flex-shrink-0`}>
-                          <span className={`material-symbols-outlined text-lg ${file.iconColor}`}>{file.icon}</span>
+                        <div className={`w-8 h-8 rounded-lg ${file.icon_bg} flex items-center justify-center flex-shrink-0`}>
+                          <span className={`material-symbols-outlined text-lg ${file.icon_color}`}>{file.icon}</span>
                         </div>
                         <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{file.name}</p>
                       </div>
                     </td>
                     <td className="px-5 py-3 hidden md:table-cell">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">{file.date}</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">{file.formatted_date}</span>
                     </td>
                     <td className="px-5 py-3 hidden sm:table-cell">
-                      <span className="text-sm text-slate-500 dark:text-slate-400">{file.size}</span>
+                      <span className="text-sm text-slate-500 dark:text-slate-400">{file.formatted_size}</span>
                     </td>
                     <td className="px-5 py-3 text-right">
                       <FileContextMenu className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors opacity-0 group-hover:opacity-100" />

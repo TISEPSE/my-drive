@@ -1,44 +1,82 @@
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 
-const stats = [
-  { label: 'Total Files', value: '1,284', change: '+24 this week', icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
-  { label: 'Storage Used', value: '15.2 GB', change: '75% of 20 GB', icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
-  { label: 'Shared Files', value: '342', change: '+8 this week', icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
-  { label: 'Trash Items', value: '5', change: 'Auto-delete in 28d', icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
-]
-
-const storageByType = [
-  { type: 'Images', size: '5.4 GB', percent: 36, color: 'bg-indigo-500', icon: 'image' },
-  { type: 'Videos', size: '4.1 GB', percent: 27, color: 'bg-purple-500', icon: 'movie' },
-  { type: 'Documents', size: '3.2 GB', percent: 21, color: 'bg-blue-500', icon: 'description' },
-  { type: 'Spreadsheets', size: '1.5 GB', percent: 10, color: 'bg-green-500', icon: 'table_chart' },
-  { type: 'Other', size: '1.0 GB', percent: 6, color: 'bg-slate-400', icon: 'folder_zip' },
-]
-
-const activityFeed = [
-  { user: 'Sarah M.', initials: 'SM', color: 'bg-pink-500', action: 'uploaded', target: 'Hero_Banner_v4.jpg', time: '10 min ago' },
-  { user: 'Mike R.', initials: 'MR', color: 'bg-teal-500', action: 'commented on', target: 'Budget_2024.xlsx', time: '25 min ago' },
-  { user: 'You', initials: 'AD', color: 'bg-slate-600', action: 'edited', target: 'Project_Brief_v3.docx', time: '1h ago' },
-  { user: 'Jessica P.', initials: 'JP', color: 'bg-violet-500', action: 'shared', target: 'Q4_Financial_Report.pdf', time: '2h ago' },
-  { user: 'David K.', initials: 'DK', color: 'bg-amber-500', action: 'moved', target: 'Campaign_Assets_2024', time: '3h ago' },
-  { user: 'Emily C.', initials: 'EC', color: 'bg-cyan-500', action: 'downloaded', target: 'Meeting_Notes_Oct.docx', time: '5h ago' },
-]
-
-const quickAccessFiles = [
-  { name: 'Project_Brief_v3.docx', icon: 'description', iconColor: 'text-blue-400', iconBg: 'bg-blue-500/10', subtitle: 'Edited 10m ago', badge: null },
-  { name: 'Q3_Report.pdf', icon: 'picture_as_pdf', iconColor: 'text-red-400', iconBg: 'bg-red-500/10', subtitle: 'Opened yesterday', badge: 'You' },
-  { name: 'Budget_2024.xlsx', icon: 'table_chart', iconColor: 'text-green-400', iconBg: 'bg-green-500/10', subtitle: 'Edited Oct 20', badge: null },
-  { name: 'Logo_V2.fig', icon: 'image', iconColor: 'text-indigo-400', iconBg: 'bg-indigo-500/10', subtitle: 'Edited 2m ago', badge: null },
-]
-
-const teamMembers = [
-  { name: 'Sarah Miller', initials: 'SM', color: 'bg-pink-500', role: 'Designer', files: 156, online: true },
-  { name: 'Mike Ross', initials: 'MR', color: 'bg-teal-500', role: 'Finance', files: 42, online: true },
-  { name: 'Jessica Pearson', initials: 'JP', color: 'bg-violet-500', role: 'Manager', files: 89, online: false },
-  { name: 'David Kim', initials: 'DK', color: 'bg-amber-500', role: 'Marketing', files: 234, online: true },
-]
-
 export default function Dashboard() {
+  const [stats, setStats] = useState([
+    { label: 'Total Files', value: '-', change: '', icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
+    { label: 'Storage Used', value: '-', change: '', icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
+    { label: 'Shared Files', value: '-', change: '', icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
+    { label: 'Trash Items', value: '-', change: '', icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
+  ])
+  const [storageByType, setStorageByType] = useState([])
+  const [storageTotal, setStorageTotal] = useState({ used: '0 GB', limit: '20 GB' })
+  const [activityFeed, setActivityFeed] = useState([])
+  const [quickAccessFiles, setQuickAccessFiles] = useState([])
+  const [teamMembers, setTeamMembers] = useState([])
+  const [onlineCount, setOnlineCount] = useState(0)
+
+  useEffect(() => {
+    // Fetch all dashboard data in parallel
+    Promise.all([
+      fetch('/api/dashboard/stats').then(r => r.json()),
+      fetch('/api/user/storage').then(r => r.json()),
+      fetch('/api/dashboard/activity?limit=6').then(r => r.json()),
+      fetch('/api/dashboard/quick-access?limit=4').then(r => r.json()),
+      fetch('/api/dashboard/team').then(r => r.json()),
+    ]).then(([statsData, storageData, activityData, quickData, teamData]) => {
+      setStats([
+        { label: 'Total Files', value: statsData.total_files.toLocaleString(), change: statsData.total_files_change, icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
+        { label: 'Storage Used', value: statsData.storage_used, change: `${statsData.storage_percentage}% of ${storageData.formatted_limit}`, icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
+        { label: 'Shared Files', value: statsData.shared_files.toString(), change: statsData.shared_files_change, icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
+        { label: 'Trash Items', value: statsData.trash_items.toString(), change: `Auto-delete in ${statsData.trash_auto_delete}`, icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
+      ])
+
+      const colorMap = {
+        'Images': 'bg-indigo-500',
+        'Videos': 'bg-purple-500',
+        'Documents': 'bg-blue-500',
+        'Spreadsheets': 'bg-green-500',
+        'Other': 'bg-slate-400',
+      }
+      setStorageByType(storageData.breakdown.map(item => ({
+        type: item.type,
+        size: item.formatted,
+        percent: item.percent,
+        color: colorMap[item.type] || 'bg-slate-400',
+        icon: item.icon,
+      })))
+      setStorageTotal({ used: storageData.formatted_used, limit: storageData.formatted_limit })
+
+      setActivityFeed(activityData.activities.map(a => ({
+        user: a.user.name,
+        initials: a.user.initials,
+        color: a.user.color,
+        action: a.action,
+        target: a.target,
+        time: a.time,
+      })))
+
+      setQuickAccessFiles(quickData.files.map(f => ({
+        name: f.name,
+        icon: f.icon,
+        iconColor: f.icon_color,
+        iconBg: f.icon_bg,
+        subtitle: f.subtitle,
+        badge: f.is_owner ? null : 'Shared',
+      })))
+
+      setTeamMembers(teamData.members.map(m => ({
+        name: m.name,
+        initials: m.initials,
+        color: m.color,
+        role: m.role,
+        files: m.files_count,
+        online: m.is_online,
+      })))
+      setOnlineCount(teamData.online_count)
+    }).catch(err => console.error('Dashboard fetch error:', err))
+  }, [])
+
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-background-light dark:bg-background-dark">
       {/* Page Header */}
@@ -113,7 +151,7 @@ export default function Dashboard() {
           {/* Total */}
           <div className="mt-4 pt-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
             <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total used</span>
-            <span className="text-sm font-bold text-slate-900 dark:text-white">15.2 GB / 20 GB</span>
+            <span className="text-sm font-bold text-slate-900 dark:text-white">{storageTotal.used} / {storageTotal.limit}</span>
           </div>
         </div>
 
@@ -190,7 +228,7 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Team Members</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500">{teamMembers.filter(m => m.online).length} online</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{onlineCount} online</span>
           </div>
 
           <div className="space-y-0">

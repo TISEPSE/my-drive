@@ -34,15 +34,15 @@ export default function Header() {
       </div>
 
       {/* Header Actions */}
-      <div className="flex items-center gap-4 ml-4">
-        <button className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
-          <span className="material-symbols-outlined">notifications</span>
+      <div className="flex items-center gap-2 ml-4">
+        <button className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
+          <span className="material-symbols-outlined text-[22px] leading-none">notifications</span>
         </button>
         <button
           onClick={() => navigate('/settings')}
-          className="p-2 text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors"
+          className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors"
         >
-          <span className="material-symbols-outlined">settings</span>
+          <span className="material-symbols-outlined text-[22px] leading-none">settings</span>
         </button>
         <div className="h-8 w-[1px] bg-slate-200 dark:bg-border-dark mx-1"></div>
         <button className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
@@ -52,7 +52,7 @@ export default function Header() {
             AD
           </div>
           <span className="text-sm font-medium text-slate-700 dark:text-white hidden sm:block">Alex D.</span>
-          <span className="material-symbols-outlined text-slate-400 text-lg">expand_more</span>
+          <span className="material-symbols-outlined text-slate-400 text-lg leading-none">expand_more</span>
         </button>
       </div>
     </header>

@@ -1,27 +1,62 @@
-version: "3.9"
-
 services:
+  db:
+    image: postgres:16-alpine
+    container_name: CloudSpace-Postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: cloudspace
+      POSTGRES_PASSWORD: cloudspace_secret
+      POSTGRES_DB: cloudspace_db
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - my-net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U cloudspace -d cloudspace_db"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
   api:
-    build: 
+    build:
       context: ./backend
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: Backend-Flask
+    restart: unless-stopped
     expose:
       - "5000"
+    environment:
+      SECRET_KEY: change-me-in-production-use-long-random-string
+      DATABASE_URL: postgresql://cloudspace:cloudspace_secret@db:5432/cloudspace_db
+      UPLOAD_FOLDER: /app/uploads
+    volumes:
+      - uploads_data:/app/uploads
+    depends_on:
+      db:
+        condition: service_healthy
     networks:
       - my-net
 
   client:
     build:
       context: ./client
-      dockerfile: Dockerfile
+      dockerfile: dockerfile
     container_name: Frontend-Vite
+    restart: unless-stopped
     ports:
       - "80:80"
     depends_on:
       - api
     networks:
       - my-net
+
+volumes:
+  pgdata:
+    driver: local
+  uploads_data:
+    driver: local
 
 networks:
   my-net:

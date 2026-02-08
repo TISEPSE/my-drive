@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 
 const navItems = [
@@ -12,6 +13,51 @@ const navItems = [
 
 export default function Sidebar() {
   const location = useLocation()
+  const fileInputRef = useRef(null)
+  const [storage, setStorage] = useState({ percentage: 75, formatted_used: '15 GB', formatted_limit: '20 GB' })
+
+  useEffect(() => {
+    fetch('/api/user/storage')
+      .then(r => r.json())
+      .then(data => setStorage({
+        percentage: data.percentage,
+        formatted_used: data.formatted_used,
+        formatted_limit: data.formatted_limit,
+      }))
+      .catch(() => {})
+  }, [])
+
+  const handleUploadClick = () => {
+    fileInputRef.current?.click()
+  }
+
+  const handleFileSelected = async (e) => {
+    const files = Array.from(e.target.files)
+    if (files.length === 0) return
+
+    for (const file of files) {
+      const formData = new FormData()
+      formData.append('file', file)
+      try {
+        await fetch('/api/files/upload', { method: 'POST', body: formData })
+      } catch (err) {
+        console.error('Upload failed:', err)
+      }
+    }
+
+    // Refresh storage
+    fetch('/api/user/storage')
+      .then(r => r.json())
+      .then(data => setStorage({
+        percentage: data.percentage,
+        formatted_used: data.formatted_used,
+        formatted_limit: data.formatted_limit,
+      }))
+      .catch(() => {})
+
+    // Reset input so the same file can be re-selected
+    e.target.value = ''
+  }
 
   return (
     <aside className="w-60 flex-shrink-0 bg-white dark:bg-background-dark border-r border-slate-200 dark:border-border-dark flex flex-col z-20">
@@ -27,10 +73,20 @@ export default function Sidebar() {
       <nav className="flex-1 overflow-y-auto py-4 px-2.5 flex flex-col gap-0.5">
         {/* New Upload Button */}
         <div className="mb-4 px-0.5">
-          <button className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow-lg shadow-blue-500/20 transition-all text-sm">
+          <button
+            onClick={handleUploadClick}
+            className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow-lg shadow-blue-500/20 transition-all text-sm"
+          >
             <span className="material-symbols-outlined text-[20px]">add</span>
             <span>New Upload</span>
           </button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            className="hidden"
+            onChange={handleFileSelected}
+          />
         </div>
 
         <div className="flex flex-col gap-0.5">
@@ -64,12 +120,12 @@ export default function Sidebar() {
       <div className="p-3.5 border-t border-slate-200 dark:border-border-dark">
         <div className="flex items-center justify-between mb-1.5">
           <span className="text-xs font-medium text-slate-700 dark:text-slate-300">Storage</span>
-          <span className="text-[10px] text-slate-500 dark:text-slate-400">75% used</span>
+          <span className="text-[10px] text-slate-500 dark:text-slate-400">{storage.percentage}% used</span>
         </div>
         <div className="w-full bg-slate-200 dark:bg-border-dark rounded-full h-1.5 mb-1.5">
-          <div className="bg-primary h-1.5 rounded-full" style={{ width: '75%' }}></div>
+          <div className="bg-primary h-1.5 rounded-full" style={{ width: `${storage.percentage}%` }}></div>
         </div>
-        <p className="text-[10px] text-slate-500 dark:text-slate-500">15 GB of 20 GB used</p>
+        <p className="text-[10px] text-slate-500 dark:text-slate-500">{storage.formatted_used} of {storage.formatted_limit} used</p>
         <button className="mt-2.5 w-full py-1.5 text-[11px] font-medium text-primary border border-primary/30 rounded hover:bg-primary/5 transition-colors">
           Upgrade Plan
         </button>
