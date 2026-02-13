@@ -27,23 +27,26 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
     const viewportH = window.innerHeight
     const viewportW = window.innerWidth
 
-    let top = anchorRect.bottom + 4
     let left = anchorRect.right - menuRect.width
-
-    // Flip up if overflowing bottom
-    if (top + menuRect.height > viewportH - 12) {
-      top = anchorRect.top - menuRect.height - 4
-    }
-
-    // Keep within left/right bounds
     if (left < 12) left = 12
     if (left + menuRect.width > viewportW - 12) {
       left = viewportW - menuRect.width - 12
     }
 
-    setPosition({ top, left })
+    const spaceBelow = viewportH - anchorRect.bottom - 12
+    const spaceAbove = anchorRect.top - 12
+    const openAbove = menuRect.height > spaceBelow && spaceAbove > spaceBelow
 
-    // Trigger enter animation on next frame
+    let top
+    if (openAbove) {
+      top = anchorRect.top - menuRect.height - 4
+      if (top < 12) top = 12
+    } else {
+      top = anchorRect.bottom + 4
+    }
+
+    setPosition({ top, left, openAbove })
+
     requestAnimationFrame(() => setVisible(true))
   }, [anchorRect])
 
@@ -83,14 +86,15 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
     >
       <div
         className={`
-          w-56 py-1.5 rounded-xl
+          w-56 rounded-xl overflow-hidden
           bg-white dark:bg-[#1e2a36]
           border border-slate-200 dark:border-[#2d3b47]
           shadow-xl shadow-black/15 dark:shadow-black/40
-          origin-top-right transition-all duration-150 ease-out
+          transition-all duration-150 ease-out
+          ${position.openAbove ? 'origin-bottom-right' : 'origin-top-right'}
           ${visible
             ? 'opacity-100 scale-100 translate-y-0'
-            : 'opacity-0 scale-95 -translate-y-1'
+            : `opacity-0 scale-95 ${position.openAbove ? 'translate-y-1' : '-translate-y-1'}`
           }
         `}
       >
@@ -99,7 +103,7 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
             return (
               <div
                 key={`div-${index}`}
-                className="my-1.5 mx-3 h-px bg-slate-150 dark:bg-[#2d3b47]"
+                className="my-1 mx-3 h-px bg-slate-100 dark:bg-[#2d3b47]"
               />
             )
           }
@@ -109,7 +113,7 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
               key={action.id}
               onClick={() => handleAction(action.id)}
               className={`
-                w-full flex items-center gap-3 px-3.5 py-2 text-left
+                w-full flex items-center gap-3 px-3.5 py-[7px] text-left
                 transition-colors duration-75 group/item
                 ${action.danger
                   ? 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'

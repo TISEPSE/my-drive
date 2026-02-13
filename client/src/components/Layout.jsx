@@ -1,6 +1,7 @@
 import { Outlet } from 'react-router-dom'
 import Sidebar from './Sidebar'
 import Header from './Header'
+import UploadToaster from './UploadToaster'
 
 export default function Layout() {
   return (
@@ -10,6 +11,7 @@ export default function Layout() {
         <Header />
         <Outlet />
       </main>
+      <UploadToaster />
     </div>
   )
 }

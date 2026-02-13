@@ -1,42 +1,91 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
 import FileContextMenu from '../components/FileContextMenu'
+import { useUpload } from '../contexts/UploadContext'
 
-const fileTypeIcons = {
-  'image/': { icon: 'image', color: 'text-indigo-400' },
-  'video/': { icon: 'movie', color: 'text-purple-400' },
-  'audio/': { icon: 'music_note', color: 'text-pink-400' },
-  'application/pdf': { icon: 'picture_as_pdf', color: 'text-red-400' },
-  'application/zip': { icon: 'folder_zip', color: 'text-gray-400' },
-  'text/': { icon: 'description', color: 'text-blue-400' },
-  'default': { icon: 'draft', color: 'text-slate-400' },
-}
+function CreateFolderModal({ open, onClose, onConfirm }) {
+  const [name, setName] = useState('')
+  const inputRef = useRef(null)
 
-function getFileIcon(type) {
-  if (!type) return fileTypeIcons['default']
-  for (const [key, value] of Object.entries(fileTypeIcons)) {
-    if (key !== 'default' && type.startsWith(key)) return value
+  useEffect(() => {
+    if (open) {
+      setName('')
+      setTimeout(() => inputRef.current?.focus(), 50)
+    }
+  }, [open])
+
+  if (!open) return null
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (name.trim()) {
+      onConfirm(name.trim())
+    }
   }
-  return fileTypeIcons['default']
-}
 
-function formatFileSize(bytes) {
-  if (bytes < 1024) return bytes + ' B'
-  if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(1) + ' KB'
-  if (bytes < 1024 * 1024 * 1024) return (bytes / (1024 * 1024)).toFixed(1) + ' MB'
-  return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div
+        className="relative bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xl shadow-black/20 w-full max-w-md mx-4 overflow-hidden"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-border-dark">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-lg text-primary">create_new_folder</span>
+            </div>
+            <h3 className="text-base font-semibold text-slate-900 dark:text-white">New Folder</h3>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+            <span className="material-symbols-outlined text-[20px] text-slate-400">close</span>
+          </button>
+        </div>
+
+        {/* Body */}
+        <form onSubmit={handleSubmit} className="p-6">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-2">Folder name</label>
+          <input
+            ref={inputRef}
+            type="text"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            placeholder="Untitled Folder"
+            className="w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-xl px-4 py-3 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+          />
+          <div className="flex items-center justify-end gap-3 mt-6">
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!name.trim()}
+              className="px-5 py-2.5 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              Create
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
 }
 
 export default function MyDrive() {
   const [view, setView] = useState('grid')
   const [isDragging, setIsDragging] = useState(false)
   const [dragFileCount, setDragFileCount] = useState(0)
-  const [uploadQueue, setUploadQueue] = useState([])
-  const [showUploadPanel, setShowUploadPanel] = useState(false)
   const [folders, setFolders] = useState([])
   const [files, setFiles] = useState([])
   const [loading, setLoading] = useState(true)
+  const [showCreateFolder, setShowCreateFolder] = useState(false)
   const dragCounterRef = useRef(0)
   const dropZoneRef = useRef(null)
+  const { uploadFiles, queue } = useUpload()
 
   const fetchContents = useCallback(async () => {
     try {
@@ -55,53 +104,15 @@ export default function MyDrive() {
     fetchContents()
   }, [fetchContents])
 
-  const uploadFiles = useCallback(async (fileList) => {
-    const newUploads = fileList.map((file, i) => ({
-      id: Date.now() + i,
-      name: file.name,
-      size: file.size,
-      type: file.type,
-      file,
-      progress: 0,
-      status: 'pending',
-    }))
-
-    setUploadQueue(prev => [...newUploads, ...prev])
-    setShowUploadPanel(true)
-
-    for (const upload of newUploads) {
-      setUploadQueue(prev =>
-        prev.map(f => f.id === upload.id ? { ...f, status: 'uploading', progress: 10 } : f)
-      )
-
-      try {
-        const formData = new FormData()
-        formData.append('file', upload.file)
-
-        const res = await fetch('/api/files/upload', {
-          method: 'POST',
-          body: formData,
-        })
-
-        if (res.ok) {
-          setUploadQueue(prev =>
-            prev.map(f => f.id === upload.id ? { ...f, progress: 100, status: 'done' } : f)
-          )
-        } else {
-          setUploadQueue(prev =>
-            prev.map(f => f.id === upload.id ? { ...f, status: 'error' } : f)
-          )
-        }
-      } catch {
-        setUploadQueue(prev =>
-          prev.map(f => f.id === upload.id ? { ...f, status: 'error' } : f)
-        )
-      }
+  // Refresh drive when uploads complete
+  const prevDoneCount = useRef(0)
+  useEffect(() => {
+    const doneCount = queue.filter(f => f.status === 'done').length
+    if (doneCount > prevDoneCount.current && doneCount > 0) {
+      fetchContents()
     }
-
-    // Refresh contents after all uploads
-    fetchContents()
-  }, [fetchContents])
+    prevDoneCount.current = doneCount
+  }, [queue, fetchContents])
 
   const handleDragEnter = useCallback((e) => {
     e.preventDefault()
@@ -140,39 +151,21 @@ export default function MyDrive() {
     uploadFiles(droppedFiles)
   }, [uploadFiles])
 
-  const handleCreateFolder = async () => {
-    const name = prompt('Folder name:')
-    if (!name || !name.trim()) return
-
+  const handleCreateFolder = async (name) => {
+    setShowCreateFolder(false)
     try {
       const res = await fetch('/api/drive/folders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name: name.trim(), parent_id: null }),
+        body: JSON.stringify({ name, parent_id: null }),
       })
       if (res.ok) {
         fetchContents()
-      } else {
-        const err = await res.json()
-        alert(err.error || 'Failed to create folder')
       }
     } catch {
-      alert('Failed to create folder')
+      // silently fail
     }
   }
-
-  const clearCompleted = () => {
-    setUploadQueue(prev => prev.filter(f => f.status !== 'done'))
-  }
-
-  const dismissUploadPanel = () => {
-    setShowUploadPanel(false)
-    setTimeout(() => setUploadQueue([]), 300)
-  }
-
-  const completedCount = uploadQueue.filter(f => f.status === 'done').length
-  const totalCount = uploadQueue.length
-  const allDone = totalCount > 0 && completedCount === totalCount
 
   if (loading) {
     return (
@@ -254,127 +247,6 @@ export default function MyDrive() {
         </div>
       </div>
 
-      {/* Upload Progress Panel */}
-      <div
-        className={`fixed bottom-6 right-6 z-40 w-[380px] transition-all duration-300 ease-out ${
-          showUploadPanel && uploadQueue.length > 0
-            ? 'translate-y-0 opacity-100'
-            : 'translate-y-4 opacity-0 pointer-events-none'
-        }`}
-      >
-        <div className="bg-[#1A2633] border border-[#283039] rounded-xl shadow-2xl shadow-black/30 overflow-hidden">
-          {/* Panel header */}
-          <div className="flex items-center justify-between px-4 py-3 border-b border-[#283039]">
-            <div className="flex items-center gap-2.5">
-              {allDone ? (
-                <div className="w-6 h-6 rounded-full bg-green-500/15 flex items-center justify-center">
-                  <span className="material-symbols-outlined text-sm text-green-400">check_circle</span>
-                </div>
-              ) : (
-                <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center">
-                  <svg className="w-3.5 h-3.5 text-primary animate-spin" viewBox="0 0 24 24" fill="none">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                  </svg>
-                </div>
-              )}
-              <span className="text-sm font-semibold text-white">
-                {allDone
-                  ? `${completedCount} upload${completedCount > 1 ? 's' : ''} complete`
-                  : `Uploading ${completedCount}/${totalCount}`
-                }
-              </span>
-            </div>
-            <div className="flex items-center gap-1">
-              {completedCount > 0 && !allDone && (
-                <button
-                  onClick={clearCompleted}
-                  className="p-1 text-slate-500 hover:text-slate-300 rounded transition-colors"
-                  title="Clear completed"
-                >
-                  <span className="material-symbols-outlined text-[18px]">playlist_remove</span>
-                </button>
-              )}
-              <button
-                onClick={dismissUploadPanel}
-                className="p-1 text-slate-500 hover:text-slate-300 rounded transition-colors"
-              >
-                <span className="material-symbols-outlined text-[18px]">close</span>
-              </button>
-            </div>
-          </div>
-
-          {/* Overall progress bar */}
-          {!allDone && totalCount > 0 && (
-            <div className="h-[2px] bg-[#283039]">
-              <div
-                className="h-full bg-gradient-to-r from-primary to-cyan-400 transition-all duration-300"
-                style={{ width: `${totalCount > 0 ? (completedCount / totalCount) * 100 : 0}%` }}
-              />
-            </div>
-          )}
-
-          {/* File list */}
-          <div className="max-h-[240px] overflow-y-auto">
-            {uploadQueue.map((file) => {
-              const typeInfo = getFileIcon(file.type)
-              return (
-                <div
-                  key={file.id}
-                  className="flex items-center gap-3 px-4 py-2.5 border-b border-[#283039]/50 last:border-b-0"
-                >
-                  {/* File type icon */}
-                  <div className="w-8 h-8 rounded-lg bg-[#151e26] flex items-center justify-center flex-shrink-0">
-                    <span className={`material-symbols-outlined text-lg ${typeInfo.color}`}>{typeInfo.icon}</span>
-                  </div>
-
-                  {/* File info + progress */}
-                  <div className="flex-1 min-w-0">
-                    <p className="text-xs font-medium text-white truncate">{file.name}</p>
-                    <div className="flex items-center gap-2 mt-1">
-                      {file.status === 'uploading' && (
-                        <>
-                          <div className="flex-1 h-1 bg-[#283039] rounded-full overflow-hidden">
-                            <div
-                              className="h-full bg-primary rounded-full transition-all duration-200"
-                              style={{ width: `${file.progress}%` }}
-                            />
-                          </div>
-                          <span className="text-[10px] text-slate-500 tabular-nums w-7 text-right">
-                            {Math.round(file.progress)}%
-                          </span>
-                        </>
-                      )}
-                      {file.status === 'pending' && (
-                        <span className="text-[10px] text-slate-500">Waiting...</span>
-                      )}
-                      {file.status === 'done' && (
-                        <div className="flex items-center gap-1">
-                          <span className="material-symbols-outlined text-xs text-green-400">check</span>
-                          <span className="text-[10px] text-slate-500">{formatFileSize(file.size)}</span>
-                        </div>
-                      )}
-                      {file.status === 'error' && (
-                        <span className="text-[10px] text-red-400">Upload failed</span>
-                      )}
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
-          </div>
-
-          {/* Panel footer - when all done */}
-          {allDone && (
-            <div className="px-4 py-2.5 border-t border-[#283039] bg-green-500/5">
-              <p className="text-xs text-green-400/80 text-center">
-                All files uploaded to My Drive
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
-
       {/* Toolbar row */}
       <div className="flex items-center justify-between mb-6">
         <nav aria-label="Breadcrumb" className="flex">
@@ -424,12 +296,10 @@ export default function MyDrive() {
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {folders.map((folder) => (
             <div key={folder.id} className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors shadow-sm group">
-              <div className="relative">
-                <span className={`material-symbols-outlined text-2xl ${folder.icon_color} mr-3`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
+              <div className="relative mr-3 flex-shrink-0">
+                <span className={`material-symbols-outlined text-2xl ${folder.icon_color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
                 {folder.is_locked && (
-                  <div className="absolute -top-1 right-0 bg-white dark:bg-background-dark rounded-full">
-                    <span className="material-symbols-outlined text-[10px] text-slate-400">lock</span>
-                  </div>
+                  <span className="absolute -bottom-0.5 -right-1 material-symbols-outlined text-[10px] text-slate-400 dark:text-slate-500" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
                 )}
               </div>
               <div className="flex-1 min-w-0">
@@ -442,7 +312,7 @@ export default function MyDrive() {
 
           {/* Create New Folder */}
           <div
-            onClick={handleCreateFolder}
+            onClick={() => setShowCreateFolder(true)}
             className="flex items-center p-3 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary group"
           >
             <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-surface-dark flex items-center justify-center mr-3 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
@@ -500,9 +370,7 @@ export default function MyDrive() {
                         <div className="relative flex-shrink-0">
                           <span className={`material-symbols-outlined text-2xl ${folder.icon_color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
                           {folder.is_locked && (
-                            <div className="absolute -top-1 -right-1 bg-white dark:bg-surface-dark rounded-full">
-                              <span className="material-symbols-outlined text-[10px] text-slate-400">lock</span>
-                            </div>
+                            <span className="absolute -bottom-0.5 -right-1 material-symbols-outlined text-[10px] text-slate-400 dark:text-slate-500" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
                           )}
                         </div>
                         <div>
@@ -549,6 +417,13 @@ export default function MyDrive() {
           </div>
         )}
       </section>
+
+      {/* Create Folder Modal */}
+      <CreateFolderModal
+        open={showCreateFolder}
+        onClose={() => setShowCreateFolder(false)}
+        onConfirm={handleCreateFolder}
+      />
     </div>
   )
 }

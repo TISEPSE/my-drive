@@ -10,6 +10,7 @@ import History from './pages/History'
 import Settings from './pages/Settings'
 import FileExplorerList from './pages/FileExplorerList'
 import FileExplorerDetail from './pages/FileExplorerDetail'
+import Gallery from './pages/Gallery'
 
 function App() {
   return (
@@ -23,6 +24,7 @@ function App() {
         <Route path="shared" element={<SharedWithMe />} />
         <Route path="recent" element={<Recent />} />
         <Route path="starred" element={<Starred />} />
+        <Route path="gallery" element={<Gallery />} />
         <Route path="trash" element={<Trash />} />
         <Route path="history" element={<History />} />
         <Route path="settings" element={<Settings />} />

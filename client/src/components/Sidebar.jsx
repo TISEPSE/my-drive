@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
+import { useUpload } from '../contexts/UploadContext'
 
 const navItems = [
   { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -7,6 +8,7 @@ const navItems = [
   { path: '/shared', icon: 'group', label: 'Shared with me' },
   { path: '/recent', icon: 'schedule', label: 'Recent' },
   { path: '/starred', icon: 'star', label: 'Starred' },
+  { path: '/gallery', icon: 'photo_library', label: 'Gallery' },
   { path: '/history', icon: 'history', label: 'History' },
   { path: '/trash', icon: 'delete', label: 'Trash' },
 ]
@@ -14,6 +16,7 @@ const navItems = [
 export default function Sidebar() {
   const location = useLocation()
   const fileInputRef = useRef(null)
+  const { uploadFiles } = useUpload()
   const [storage, setStorage] = useState({ percentage: 75, formatted_used: '15 GB', formatted_limit: '20 GB' })
 
   useEffect(() => {
@@ -27,35 +30,9 @@ export default function Sidebar() {
       .catch(() => {})
   }, [])
 
-  const handleUploadClick = () => {
-    fileInputRef.current?.click()
-  }
-
-  const handleFileSelected = async (e) => {
+  const handleFileSelected = (e) => {
     const files = Array.from(e.target.files)
-    if (files.length === 0) return
-
-    for (const file of files) {
-      const formData = new FormData()
-      formData.append('file', file)
-      try {
-        await fetch('/api/files/upload', { method: 'POST', body: formData })
-      } catch (err) {
-        console.error('Upload failed:', err)
-      }
-    }
-
-    // Refresh storage
-    fetch('/api/user/storage')
-      .then(r => r.json())
-      .then(data => setStorage({
-        percentage: data.percentage,
-        formatted_used: data.formatted_used,
-        formatted_limit: data.formatted_limit,
-      }))
-      .catch(() => {})
-
-    // Reset input so the same file can be re-selected
+    if (files.length > 0) uploadFiles(files)
     e.target.value = ''
   }
 
@@ -74,7 +51,7 @@ export default function Sidebar() {
         {/* New Upload Button */}
         <div className="mb-4 px-0.5">
           <button
-            onClick={handleUploadClick}
+            onClick={() => fileInputRef.current?.click()}
             className="w-full flex items-center justify-center gap-2 bg-primary hover:bg-blue-600 text-white font-semibold py-2 px-3 rounded-lg shadow-lg shadow-blue-500/20 transition-all text-sm"
           >
             <span className="material-symbols-outlined text-[20px]">add</span>
