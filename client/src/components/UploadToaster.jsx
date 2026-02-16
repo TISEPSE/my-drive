@@ -1,3 +1,4 @@
+import { useState, useEffect, useRef } from 'react'
 import { useUpload } from '../contexts/UploadContext'
 
 const fileTypeIcons = {
@@ -6,7 +7,8 @@ const fileTypeIcons = {
   'audio/': { icon: 'music_note', color: 'text-pink-400' },
   'application/pdf': { icon: 'picture_as_pdf', color: 'text-red-400' },
   'application/zip': { icon: 'folder_zip', color: 'text-gray-400' },
-  'text/': { icon: 'description', color: 'text-blue-400' },
+  'text/plain': { icon: 'description', color: 'text-blue-400' },
+  'text/': { icon: 'data_object', color: 'text-yellow-400' },
 }
 
 function getFileIcon(type) {
@@ -26,6 +28,37 @@ function formatSize(bytes) {
 
 export default function UploadToaster() {
   const { queue, visible, clearDone, dismiss } = useUpload()
+  const [mounted, setMounted] = useState(false)
+  const [animateIn, setAnimateIn] = useState(false)
+  const timeoutRef = useRef(null)
+
+  const shouldShow = visible && queue.length > 0
+
+  useEffect(() => {
+    clearTimeout(timeoutRef.current)
+
+    if (shouldShow && !mounted) {
+      // Mount first, then animate in on next frame
+      setMounted(true)
+    } else if (!shouldShow && mounted) {
+      // Animate out, then unmount after transition
+      setAnimateIn(false)
+      timeoutRef.current = setTimeout(() => setMounted(false), 300)
+    }
+
+    return () => clearTimeout(timeoutRef.current)
+  }, [shouldShow, mounted])
+
+  // Trigger animate-in after mount
+  useEffect(() => {
+    if (mounted && shouldShow) {
+      // Need a frame delay so the browser paints the initial (hidden) state first
+      const raf = requestAnimationFrame(() => setAnimateIn(true))
+      return () => cancelAnimationFrame(raf)
+    }
+  }, [mounted, shouldShow])
+
+  if (!mounted) return null
 
   const doneCount = queue.filter(f => f.status === 'done').length
   const errorCount = queue.filter(f => f.status === 'error').length
@@ -33,10 +66,14 @@ export default function UploadToaster() {
   const allDone = total > 0 && doneCount + errorCount === total
   const overallProgress = total > 0 ? Math.round(queue.reduce((sum, f) => sum + f.progress, 0) / total) : 0
 
-  if (!visible || total === 0) return null
-
   return (
-    <div className={`fixed bottom-5 right-5 z-50 w-[360px] transition-all duration-300 ease-out ${visible ? 'translate-y-0 opacity-100' : 'translate-y-4 opacity-0 pointer-events-none'}`}>
+    <div
+      className={`fixed bottom-5 right-5 z-50 w-[360px] transition-all duration-300 ease-out ${
+        animateIn
+          ? 'translate-y-0 opacity-100 scale-100'
+          : 'translate-y-6 opacity-0 scale-95'
+      }`}
+    >
       <div className="bg-white dark:bg-[#1a2633] border border-slate-200 dark:border-[#283039] rounded-xl shadow-2xl shadow-black/15 dark:shadow-black/40 overflow-hidden">
 
         {/* Header */}
@@ -113,10 +150,7 @@ export default function UploadToaster() {
                       <span className="text-[10px] text-slate-400">Waiting...</span>
                     )}
                     {file.status === 'done' && (
-                      <div className="flex items-center gap-1">
-                        <span className="material-symbols-outlined text-xs text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-                        <span className="text-[10px] text-slate-400">{formatSize(file.size)}</span>
-                      </div>
+                      <span className="text-[10px] text-slate-400">{formatSize(file.size)}</span>
                     )}
                     {file.status === 'error' && (
                       <div className="flex items-center gap-1">
@@ -130,7 +164,6 @@ export default function UploadToaster() {
             )
           })}
         </div>
-
 
       </div>
     </div>

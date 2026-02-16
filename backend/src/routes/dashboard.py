@@ -1,13 +1,12 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, g
 from sqlalchemy import func
 from datetime import datetime, timezone, timedelta
 from src.extensions import db
 from src.models import User, File, ActivityLog
 from src.utils import format_file_size, format_relative_time
+from src.auth import login_required
 
 dashboard_bp = Blueprint('dashboard', __name__)
-
-CURRENT_USER_ID = 'user-alex-001'
 
 # Color mapping for team member avatars
 USER_COLORS = {
@@ -37,28 +36,29 @@ ACTION_VERBS = {
 
 
 @dashboard_bp.route('/api/dashboard/stats')
+@login_required
 def dashboard_stats():
-    user = User.query.get(CURRENT_USER_ID)
+    user = User.query.get(g.current_user_id)
     now = datetime.now(timezone.utc)
     week_ago = now - timedelta(days=7)
 
     total_files = File.query.filter_by(
-        owner_id=CURRENT_USER_ID, is_trashed=False
+        owner_id=g.current_user_id, is_trashed=False
     ).count()
 
     files_this_week = File.query.filter(
-        File.owner_id == CURRENT_USER_ID,
+        File.owner_id == g.current_user_id,
         File.is_trashed == False,
         File.created_at >= week_ago,
     ).count()
 
     trash_items = File.query.filter_by(
-        owner_id=CURRENT_USER_ID, is_trashed=True
+        owner_id=g.current_user_id, is_trashed=True
     ).count()
 
     # Calculate auto-delete countdown
     oldest_trash = File.query.filter_by(
-        owner_id=CURRENT_USER_ID, is_trashed=True
+        owner_id=g.current_user_id, is_trashed=True
     ).order_by(File.trashed_at.asc()).first()
 
     if oldest_trash and oldest_trash.trashed_at:
@@ -81,6 +81,7 @@ def dashboard_stats():
 
 
 @dashboard_bp.route('/api/dashboard/activity')
+@login_required
 def dashboard_activity():
     limit = request.args.get('limit', 6, type=int)
 
@@ -97,7 +98,7 @@ def dashboard_activity():
         file_obj = File.query.get(act.file_id) if act.file_id else None
         initials = user.first_name[0] + user.last_name[0]
 
-        is_current = user.id == CURRENT_USER_ID
+        is_current = user.id == g.current_user_id
         display_name = 'You' if is_current else f"{user.first_name} {user.last_name[0]}."
 
         result.append({
@@ -119,12 +120,13 @@ def dashboard_activity():
 
 
 @dashboard_bp.route('/api/dashboard/quick-access')
+@login_required
 def dashboard_quick_access():
     limit = request.args.get('limit', 4, type=int)
 
     # Get recent file activities for current user
     activities = ActivityLog.query.filter(
-        ActivityLog.user_id == CURRENT_USER_ID,
+        ActivityLog.user_id == g.current_user_id,
         ActivityLog.file_id.isnot(None),
         ActivityLog.action.in_(['file_edited', 'file_viewed', 'file_uploaded']),
     ).order_by(ActivityLog.created_at.desc()).all()
@@ -156,7 +158,7 @@ def dashboard_quick_access():
             'icon_color': file_obj.icon_color,
             'icon_bg': file_obj.icon_bg or 'bg-slate-500/10',
             'subtitle': subtitle,
-            'is_owner': file_obj.owner_id == CURRENT_USER_ID,
+            'is_owner': file_obj.owner_id == g.current_user_id,
         })
 
         if len(result) >= limit:
@@ -166,8 +168,9 @@ def dashboard_quick_access():
 
 
 @dashboard_bp.route('/api/dashboard/team')
+@login_required
 def dashboard_team():
-    members = User.query.filter(User.id != CURRENT_USER_ID).all()
+    members = User.query.filter(User.id != g.current_user_id).all()
 
     result = []
     for m in members:

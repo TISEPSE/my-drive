@@ -32,7 +32,7 @@ def create_app():
 
     # Create tables and seed
     with app.app_context():
-        from src.models import User, File, ActivityLog, UserSettings  # noqa: F401
+        from src.models import User, File, ActivityLog, UserSettings, TokenBlocklist  # noqa: F401
         db.create_all()
         from src.seed import seed_data
         seed_data()

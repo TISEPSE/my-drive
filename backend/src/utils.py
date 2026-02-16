@@ -20,6 +20,7 @@ MIME_ICON_MAP = [
     ('application/json', 'data_object', 'text-yellow-500', 'bg-yellow-50 dark:bg-yellow-500/10'),
     ('text/html', 'data_object', 'text-yellow-500', 'bg-yellow-50 dark:bg-yellow-500/10'),
     ('text/css', 'data_object', 'text-yellow-500', 'bg-yellow-50 dark:bg-yellow-500/10'),
+    ('text/plain', 'description', 'text-blue-500', 'bg-blue-50 dark:bg-blue-500/10'),
 ]
 
 DEFAULT_ICON = ('draft', 'text-slate-500', 'bg-slate-50 dark:bg-slate-500/10')

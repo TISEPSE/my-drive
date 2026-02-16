@@ -1,7 +1,10 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
+import { useAuth } from '../contexts/AuthContext'
+import { apiFetch } from '../lib/api'
 
 export default function Dashboard() {
+  const { user } = useAuth()
   const [stats, setStats] = useState([
     { label: 'Total Files', value: '-', change: '', icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
     { label: 'Storage Used', value: '-', change: '', icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
@@ -18,11 +21,11 @@ export default function Dashboard() {
   useEffect(() => {
     // Fetch all dashboard data in parallel
     Promise.all([
-      fetch('/api/dashboard/stats').then(r => r.json()),
-      fetch('/api/user/storage').then(r => r.json()),
-      fetch('/api/dashboard/activity?limit=6').then(r => r.json()),
-      fetch('/api/dashboard/quick-access?limit=4').then(r => r.json()),
-      fetch('/api/dashboard/team').then(r => r.json()),
+      apiFetch('/api/dashboard/stats').then(r => r.json()),
+      apiFetch('/api/user/storage').then(r => r.json()),
+      apiFetch('/api/dashboard/activity?limit=6').then(r => r.json()),
+      apiFetch('/api/dashboard/quick-access?limit=4').then(r => r.json()),
+      apiFetch('/api/dashboard/team').then(r => r.json()),
     ]).then(([statsData, storageData, activityData, quickData, teamData]) => {
       setStats([
         { label: 'Total Files', value: statsData.total_files.toLocaleString(), change: statsData.total_files_change, icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
@@ -82,7 +85,7 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, Alex</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, {user?.first_name || 'there'}</h2>
           <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Here's what's happening in your workspace</p>
         </div>
         <div className="flex items-center gap-2">

@@ -5,3 +5,4 @@ flask-migrate
 python-dotenv
 werkzeug
 psycopg2-binary
+PyJWT

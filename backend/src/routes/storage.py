@@ -1,12 +1,11 @@
-from flask import Blueprint, jsonify
+from flask import Blueprint, jsonify, g
 from sqlalchemy import func
 from src.extensions import db
 from src.models import User, File
 from src.utils import format_file_size
+from src.auth import login_required
 
 storage_bp = Blueprint('storage', __name__)
-
-CURRENT_USER_ID = 'user-alex-001'
 
 # MIME type categories for storage breakdown
 STORAGE_CATEGORIES = [
@@ -21,12 +20,13 @@ STORAGE_CATEGORIES = [
 
 
 @storage_bp.route('/api/user/storage')
+@login_required
 def user_storage():
-    user = User.query.get(CURRENT_USER_ID)
+    user = User.query.get(g.current_user_id)
 
     # Calculate real storage from files
     all_files = File.query.filter_by(
-        owner_id=CURRENT_USER_ID, is_folder=False, is_trashed=False
+        owner_id=g.current_user_id, is_folder=False, is_trashed=False
     ).all()
 
     total_used = sum(f.size for f in all_files)

@@ -1,11 +1,11 @@
-from flask import Blueprint, request, jsonify
+import os
+from flask import Blueprint, request, jsonify, g
 from src.extensions import db
-from src.models import User, File, ActivityLog
+from src.models import File, ActivityLog
 from src.utils import format_file_size, format_relative_time
+from src.auth import login_required
 
 drive_bp = Blueprint('drive', __name__)
-
-CURRENT_USER_ID = 'user-alex-001'
 
 
 def build_breadcrumbs(folder):
@@ -24,6 +24,7 @@ def build_breadcrumbs(folder):
 
 
 @drive_bp.route('/api/drive/contents')
+@login_required
 def drive_contents():
     parent_id = request.args.get('parent_id', None)
     sort_by = request.args.get('sort', 'name')
@@ -34,7 +35,7 @@ def drive_contents():
 
     # Build query
     query = File.query.filter_by(
-        owner_id=CURRENT_USER_ID,
+        owner_id=g.current_user_id,
         is_trashed=False,
     )
 
@@ -75,6 +76,7 @@ def drive_contents():
                 'updated_at': item.updated_at.isoformat() + 'Z' if item.updated_at else None,
             })
         else:
+            has_content = bool(item.storage_path and os.path.exists(item.storage_path))
             files.append({
                 'id': item.id,
                 'name': item.name,
@@ -86,6 +88,7 @@ def drive_contents():
                 'mime_type': item.mime_type,
                 'is_starred': item.is_starred,
                 'is_locked': item.is_locked,
+                'has_content': has_content,
                 'updated_at': item.updated_at.isoformat() + 'Z' if item.updated_at else None,
                 'formatted_date': format_relative_time(item.updated_at),
             })
@@ -112,6 +115,7 @@ def drive_contents():
 
 
 @drive_bp.route('/api/drive/folders', methods=['POST'])
+@login_required
 def create_folder():
     data = request.get_json()
     name = data.get('name', '').strip()
@@ -125,7 +129,7 @@ def create_folder():
 
     # Check duplicate name
     existing = File.query.filter_by(
-        owner_id=CURRENT_USER_ID,
+        owner_id=g.current_user_id,
         parent_id=parent_id,
         name=name,
         is_folder=True,
@@ -140,13 +144,13 @@ def create_folder():
         is_folder=True,
         icon='folder',
         icon_color='text-yellow-500',
-        owner_id=CURRENT_USER_ID,
+        owner_id=g.current_user_id,
         parent_id=parent_id,
     )
     db.session.add(folder)
 
     log = ActivityLog(
-        user_id=CURRENT_USER_ID,
+        user_id=g.current_user_id,
         file_id=folder.id,
         action='folder_created',
     )

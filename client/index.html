@@ -10,7 +10,6 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
     <style>
-      /* Loading screen - shown instantly before anything else */
       #loading-screen {
         position: fixed;
         inset: 0;
@@ -20,47 +19,71 @@
         align-items: center;
         justify-content: center;
         background: #101922;
-        transition: opacity 0.4s ease, visibility 0.4s ease;
+        transition: opacity 0.5s ease, visibility 0.5s ease;
       }
       #loading-screen.hidden {
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
       }
-      #loading-logo {
+      .loader-icon {
+        position: relative;
+        width: 56px;
+        height: 56px;
+        margin-bottom: 28px;
+        animation: fadeIn 0.4s ease both;
+      }
+      .loader-icon-ring {
+        position: absolute;
+        inset: 0;
+        border-radius: 50%;
+        border: 2.5px solid transparent;
+        border-top-color: #258cf4;
+        animation: spin 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
+      }
+      .loader-icon-ring:nth-child(2) {
+        inset: 6px;
+        border-top-color: transparent;
+        border-right-color: #258cf4;
+        opacity: 0.4;
+        animation-duration: 1.5s;
+        animation-direction: reverse;
+      }
+      .loader-icon-cloud {
+        position: absolute;
+        inset: 0;
         display: flex;
         align-items: center;
-        gap: 12px;
-        margin-bottom: 32px;
-        animation: fadeInUp 0.5s ease both;
+        justify-content: center;
+        font-family: 'Material Symbols Outlined';
+        font-size: 24px;
+        color: #258cf4;
+        font-variation-settings: 'FILL' 1;
       }
-      #loading-logo svg {
-        width: 40px;
-        height: 40px;
+      .loader-bar-track {
+        width: 180px;
+        height: 3px;
+        background: #1e2a36;
+        border-radius: 99px;
+        overflow: hidden;
+        animation: fadeIn 0.4s ease 0.15s both;
       }
-      #loading-logo span {
+      .loader-bar-fill {
+        height: 100%;
+        width: 40%;
+        background: linear-gradient(90deg, #258cf4, #60bfff);
+        border-radius: 99px;
+        animation: barSlide 1.2s ease-in-out infinite;
+      }
+      .loader-label {
+        margin-top: 18px;
         font-family: 'Inter', system-ui, sans-serif;
-        font-size: 22px;
-        font-weight: 700;
-        color: #ffffff;
-        letter-spacing: -0.02em;
+        font-size: 12px;
+        font-weight: 500;
+        color: #475569;
+        letter-spacing: 0.04em;
+        animation: fadeIn 0.4s ease 0.25s both;
       }
-      #loading-spinner {
-        width: 36px;
-        height: 36px;
-        border: 3px solid #283039;
-        border-top-color: #258cf4;
-        border-radius: 50%;
-        animation: spin 0.8s linear infinite, fadeInUp 0.5s ease 0.1s both;
-      }
-      #loading-text {
-        margin-top: 16px;
-        font-family: 'Inter', system-ui, sans-serif;
-        font-size: 13px;
-        color: #64748b;
-        animation: fadeInUp 0.5s ease 0.2s both;
-      }
-      /* Hide app content until ready */
       #root {
         opacity: 0;
         transition: opacity 0.3s ease;
@@ -71,32 +94,28 @@
       @keyframes spin {
         to { transform: rotate(360deg); }
       }
-      @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+      @keyframes fadeIn {
+        from { opacity: 0; }
+        to { opacity: 1; }
+      }
+      @keyframes barSlide {
+        0%   { transform: translateX(-100%); }
+        50%  { transform: translateX(200%); }
+        100% { transform: translateX(-100%); }
       }
     </style>
   </head>
   <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
-    <!-- Loading screen -->
     <div id="loading-screen">
-      <div id="loading-logo">
-        <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
-          <circle cx="20" cy="20" r="18" fill="#258cf4" opacity="0.15"/>
-          <circle cx="20" cy="20" r="12" fill="#258cf4" opacity="0.3"/>
-          <path d="M20 8C13.373 8 8 13.373 8 20s5.373 12 12 12 12-5.373 12-12S26.627 8 20 8zm0 22c-5.523 0-10-4.477-10-10S14.477 10 20 10s10 4.477 10 10-4.477 10-10 10z" fill="#258cf4"/>
-          <path d="M14 21c0-1.5.5-3 2-4s3.5-1.5 4-1.5 2.5.5 4 1.5 2 2.5 2 4-1 2.5-2 3-2.5 1-4 1-3 0-4-1-2-1.5-2-3z" fill="#258cf4"/>
-        </svg>
-        <span>CloudSpace</span>
+      <div class="loader-icon">
+        <div class="loader-icon-ring"></div>
+        <div class="loader-icon-ring"></div>
+        <div class="loader-icon-cloud">cloud</div>
       </div>
-      <div id="loading-spinner"></div>
-      <div id="loading-text">Loading your workspace...</div>
+      <div class="loader-bar-track">
+        <div class="loader-bar-fill"></div>
+      </div>
+      <div class="loader-label">CLOUDSPACE</div>
     </div>
 
     <div id="root"></div>

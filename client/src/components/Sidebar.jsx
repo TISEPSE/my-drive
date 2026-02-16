@@ -1,6 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { NavLink, useLocation } from 'react-router-dom'
 import { useUpload } from '../contexts/UploadContext'
+import { apiFetch } from '../lib/api'
 
 const navItems = [
   { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
@@ -20,7 +21,7 @@ export default function Sidebar() {
   const [storage, setStorage] = useState({ percentage: 75, formatted_used: '15 GB', formatted_limit: '20 GB' })
 
   useEffect(() => {
-    fetch('/api/user/storage')
+    apiFetch('/api/user/storage')
       .then(r => r.json())
       .then(data => setStorage({
         percentage: data.percentage,

@@ -73,7 +73,8 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
     setTimeout(onClose, 150)
   }
 
-  function handleAction(actionId) {
+  function handleAction(actionId, e) {
+    e.stopPropagation()
     onAction?.(actionId)
     handleClose()
   }
@@ -86,7 +87,7 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
     >
       <div
         className={`
-          w-56 rounded-xl overflow-hidden
+          w-56 rounded-xl py-1.5
           bg-white dark:bg-[#1e2a36]
           border border-slate-200 dark:border-[#2d3b47]
           shadow-xl shadow-black/15 dark:shadow-black/40
@@ -103,7 +104,7 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
             return (
               <div
                 key={`div-${index}`}
-                className="my-1 mx-3 h-px bg-slate-100 dark:bg-[#2d3b47]"
+                className="my-1 mx-2.5 h-px bg-slate-100 dark:bg-[#2d3b47]"
               />
             )
           }
@@ -111,10 +112,10 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
           return (
             <button
               key={action.id}
-              onClick={() => handleAction(action.id)}
+              onClick={(e) => handleAction(action.id, e)}
               className={`
-                w-full flex items-center gap-3 px-3.5 py-[7px] text-left
-                transition-colors duration-75 group/item
+                w-[calc(100%-8px)] mx-1 flex items-center gap-3 px-2.5 py-[7px] text-left
+                rounded-lg transition-colors duration-75 group/item
                 ${action.danger
                   ? 'text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10'
                   : 'text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5'

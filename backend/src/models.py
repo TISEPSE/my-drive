@@ -86,6 +86,14 @@ class UserSettings(db.Model):
     user = db.relationship('User', backref=db.backref('settings', uselist=False))
 
 
+class TokenBlocklist(db.Model):
+    __tablename__ = 'token_blocklist'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    jti = db.Column(db.String(36), unique=True, nullable=False, index=True)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+
 class ActivityLog(db.Model):
     __tablename__ = 'activity_log'
 

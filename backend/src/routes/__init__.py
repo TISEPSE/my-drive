@@ -1,3 +1,4 @@
+from src.routes.auth import auth_bp
 from src.routes.drive import drive_bp
 from src.routes.files import files_bp
 from src.routes.dashboard import dashboard_bp
@@ -6,6 +7,7 @@ from src.routes.settings import settings_bp
 
 
 def register_blueprints(app):
+    app.register_blueprint(auth_bp)
     app.register_blueprint(drive_bp)
     app.register_blueprint(files_bp)
     app.register_blueprint(dashboard_bp)
