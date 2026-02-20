@@ -4,7 +4,6 @@ import { useUpload } from '../contexts/UploadContext'
 import { apiFetch } from '../lib/api'
 
 const navItems = [
-  { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
   { path: '/drive', icon: 'folder', label: 'My Drive' },
   { path: '/shared', icon: 'group', label: 'Shared with me' },
   { path: '/recent', icon: 'schedule', label: 'Recent' },
@@ -78,7 +77,7 @@ export default function Sidebar() {
               <NavLink
                 key={item.path}
                 to={item.path}
-                className={`flex items-center gap-2.5 px-2.5 py-1.5 rounded-lg text-[13px] font-medium transition-colors ${
+                className={`flex items-center gap-2.5 px-2.5 py-1 rounded-lg text-[13px] font-medium transition-colors ${
                   isActive
                     ? 'bg-slate-100 dark:bg-surface-dark text-primary dark:text-white'
                     : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-border-dark'

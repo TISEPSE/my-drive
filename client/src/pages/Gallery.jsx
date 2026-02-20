@@ -206,26 +206,6 @@ export default function Gallery() {
         </div>
       )}
 
-      {/* Empty state */}
-      {samplePhotos.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-16 h-16 rounded-2xl bg-primary/10 flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-3xl text-primary">photo_library</span>
-          </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">No photos yet</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs mb-5">
-            Upload your first photos to start building your gallery.
-          </p>
-          <button
-            onClick={() => fileInputRef.current?.click()}
-            className="flex items-center gap-2 bg-primary hover:bg-blue-600 text-white text-sm font-semibold px-5 py-2.5 rounded-lg transition-colors"
-          >
-            <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
-            Upload Photos
-          </button>
-        </div>
-      )}
-
       {/* Lightbox */}
       <Lightbox
         photo={selectedPhoto}

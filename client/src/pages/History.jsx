@@ -70,12 +70,12 @@ export default function History() {
               {group.events.map((event, idx) => (
                 <div
                   key={idx}
-                  className={`flex items-center gap-4 px-5 py-3.5 hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors ${
+                  className={`flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors ${
                     idx < group.events.length - 1 ? 'border-b border-slate-100 dark:border-border-dark' : ''
                   }`}
                 >
                   {/* Icon */}
-                  <div className={`w-9 h-9 rounded-lg ${event.iconBg} flex items-center justify-center flex-shrink-0`}>
+                  <div className={`w-8 h-8 rounded-lg ${event.iconBg} flex items-center justify-center flex-shrink-0`}>
                     <span className={`material-symbols-outlined text-lg ${event.iconColor}`}>{event.icon}</span>
                   </div>
 

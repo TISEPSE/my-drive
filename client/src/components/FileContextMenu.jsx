@@ -1,23 +1,8 @@
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 
-const menuActions = [
-  { id: 'preview', label: 'Preview', icon: 'visibility', shortcut: 'Space' },
-  { id: 'share', label: 'Share', icon: 'share', shortcut: 'Ctrl+S' },
-  { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
-  { type: 'divider' },
-  { id: 'move', label: 'Move to...', icon: 'drive_file_move' },
-  { id: 'copy', label: 'Make a copy', icon: 'content_copy', shortcut: 'Ctrl+C' },
-  { id: 'lock', label: 'Lock', icon: 'lock' },
-  { id: 'download', label: 'Download', icon: 'download', shortcut: 'Ctrl+D' },
-  { type: 'divider' },
-  { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
-]
-
-function MenuDropdown({ anchorRect, onClose, onAction }) {
-  const menuRef = useRef(null)
+function useDropdownPosition(anchorRect, menuRef) {
   const [position, setPosition] = useState({ top: 0, left: 0 })
-  const [visible, setVisible] = useState(false)
 
   useEffect(() => {
     if (!anchorRect || !menuRef.current) return
@@ -46,19 +31,20 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
     }
 
     setPosition({ top, left, openAbove })
+  }, [anchorRect, menuRef])
 
-    requestAnimationFrame(() => setVisible(true))
-  }, [anchorRect])
+  return position
+}
 
-  // Close on outside click
+function useClickOutside(ref, onClose) {
   useEffect(() => {
     function handleClick(e) {
-      if (menuRef.current && !menuRef.current.contains(e.target)) {
-        handleClose()
+      if (ref.current && !ref.current.contains(e.target)) {
+        onClose()
       }
     }
     function handleKeyDown(e) {
-      if (e.key === 'Escape') handleClose()
+      if (e.key === 'Escape') onClose()
     }
     document.addEventListener('mousedown', handleClick)
     document.addEventListener('keydown', handleKeyDown)
@@ -66,17 +52,44 @@ function MenuDropdown({ anchorRect, onClose, onAction }) {
       document.removeEventListener('mousedown', handleClick)
       document.removeEventListener('keydown', handleKeyDown)
     }
-  }, [])
+  }, [ref, onClose])
+}
 
-  function handleClose() {
+const menuActions = [
+  { id: 'preview', label: 'Preview', icon: 'visibility', shortcut: 'Space' },
+  { id: 'share', label: 'Share', icon: 'share', shortcut: 'Ctrl+S' },
+  { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
+  { type: 'divider' },
+  { id: 'move', label: 'Move to...', icon: 'drive_file_move' },
+  { id: 'copy', label: 'Make a copy', icon: 'content_copy', shortcut: 'Ctrl+C' },
+  { id: 'lock', label: 'Lock', icon: 'lock' },
+  { id: 'download', label: 'Download', icon: 'download', shortcut: 'Ctrl+D' },
+  { type: 'divider' },
+  { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
+]
+
+function MenuDropdown({ anchorRect, onClose, onAction }) {
+  const menuRef = useRef(null)
+  const [visible, setVisible] = useState(false)
+  const position = useDropdownPosition(anchorRect, menuRef)
+
+  useEffect(() => {
+    if (position.top !== 0 || position.left !== 0) {
+      requestAnimationFrame(() => setVisible(true))
+    }
+  }, [position])
+
+  const handleCloseStable = useCallback(() => {
     setVisible(false)
     setTimeout(onClose, 150)
-  }
+  }, [onClose])
+
+  useClickOutside(menuRef, handleCloseStable)
 
   function handleAction(actionId, e) {
     e.stopPropagation()
     onAction?.(actionId)
-    handleClose()
+    handleCloseStable()
   }
 
   return createPortal(

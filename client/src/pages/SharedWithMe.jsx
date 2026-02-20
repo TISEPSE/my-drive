@@ -134,29 +134,29 @@ export default function SharedWithMe() {
             </tr>
           </thead>
           <tbody className="divide-y divide-slate-100 dark:divide-slate-700/50">
-            {sharedFiles.map((file, idx) => (
+            {sharedFiles.map((file) => (
               <tr
-                key={idx}
+                key={file.name}
                 className="hover:bg-slate-50 dark:hover:bg-slate-800/40 transition-colors"
               >
                 {/* File Name */}
-                <td className="px-5 py-3.5">
+                <td className="px-5 py-3">
                   <div className="flex items-center gap-3">
                     {/* Icon with shared badge */}
                     <div className="relative flex-shrink-0">
                       <div
-                        className={`w-10 h-10 rounded-lg ${file.iconBg} flex items-center justify-center`}
+                        className={`w-8 h-8 rounded-lg ${file.iconBg} flex items-center justify-center`}
                       >
                         <span
-                          className={`material-symbols-outlined text-xl ${file.iconColor} ${file.isFolder ? "fill-current" : ""}`}
+                          className={`material-symbols-outlined text-lg ${file.iconColor} ${file.isFolder ? "fill-current" : ""}`}
                           style={file.isFolder ? { fontVariationSettings: "'FILL' 1" } : undefined}
                         >
                           {file.icon}
                         </span>
                       </div>
                       {/* Shared badge */}
-                      <div className="absolute -bottom-1 -right-1 w-4.5 h-4.5 bg-white dark:bg-surface-dark rounded-full flex items-center justify-center shadow-sm">
-                        <span className="material-symbols-outlined text-blue-500 text-[13px]">
+                      <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white dark:bg-surface-dark rounded-full flex items-center justify-center shadow-sm">
+                        <span className="material-symbols-outlined text-blue-500 text-[11px]">
                           group
                         </span>
                       </div>
@@ -173,7 +173,7 @@ export default function SharedWithMe() {
                 </td>
 
                 {/* Shared by */}
-                <td className="hidden sm:table-cell px-5 py-3.5">
+                <td className="hidden sm:table-cell px-5 py-3">
                   <div className="flex items-center gap-2.5">
                     <div
                       className="w-7 h-7 rounded-full bg-cover bg-center flex-shrink-0"
@@ -186,23 +186,23 @@ export default function SharedWithMe() {
                 </td>
 
                 {/* Date Shared */}
-                <td className="hidden md:table-cell px-5 py-3.5">
+                <td className="hidden md:table-cell px-5 py-3">
                   <span className="text-sm text-slate-500 dark:text-slate-400">
                     {file.date}
                   </span>
                 </td>
 
                 {/* Size */}
-                <td className="hidden lg:table-cell px-5 py-3.5">
+                <td className="hidden lg:table-cell px-5 py-3">
                   <span className="text-sm text-slate-500 dark:text-slate-400">
                     {file.size}
                   </span>
                 </td>
 
                 {/* Actions */}
-                <td className="px-5 py-3.5 text-right">
+                <td className="px-5 py-3 text-right">
                   <FileContextMenu className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                    <span className="material-symbols-outlined text-xl">
+                    <span className="material-symbols-outlined text-[18px]">
                       more_vert
                     </span>
                   </FileContextMenu>

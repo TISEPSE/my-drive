@@ -1,4 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from 'react'
+import { useNavigate, useParams, Link } from 'react-router-dom'
 import FileContextMenu from '../components/FileContextMenu'
 import { useUpload } from '../contexts/UploadContext'
 import { apiFetch, getAccessToken } from '../lib/api'
@@ -252,11 +253,14 @@ function ConfirmTrashModal({ file, onClose, onConfirm }) {
 }
 
 export default function MyDrive() {
-  const [view, setView] = useState('grid')
+  const navigate = useNavigate()
+  const { folderId } = useParams()
+  const [view, setView] = useState(() => localStorage.getItem('cloudspace-view-mode') || 'grid')
   const [isDragging, setIsDragging] = useState(false)
   const [dragFileCount, setDragFileCount] = useState(0)
   const [folders, setFolders] = useState([])
   const [files, setFiles] = useState([])
+  const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: 'My Drive' }])
   const [ready, setReady] = useState(false)
   const [showSkeleton, setShowSkeleton] = useState(false)
   const [showCreateFolder, setShowCreateFolder] = useState(false)
@@ -264,20 +268,23 @@ export default function MyDrive() {
   const [trashTarget, setTrashTarget] = useState(null)
   const dragCounterRef = useRef(0)
   const dropZoneRef = useRef(null)
+  const fileInputRef = useRef(null)
   const { uploadFiles, queue } = useUpload()
 
   const fetchContents = useCallback(async () => {
     try {
-      const res = await apiFetch('/api/drive/contents')
+      const url = folderId ? `/api/drive/contents?parent_id=${folderId}` : '/api/drive/contents'
+      const res = await apiFetch(url)
       const data = await res.json()
       setFolders(data.folders || [])
       setFiles(data.files || [])
+      setBreadcrumbs(data.breadcrumbs || [{ id: null, name: 'My Drive' }])
     } catch (err) {
       console.error('Failed to fetch drive contents:', err)
     } finally {
       setReady(true)
     }
-  }, [])
+  }, [folderId])
 
   // Show skeleton only if loading takes more than 150ms (avoids flash)
   useEffect(() => {
@@ -287,6 +294,8 @@ export default function MyDrive() {
   }, [ready])
 
   useEffect(() => {
+    setReady(false)
+    setShowSkeleton(false)
     fetchContents()
   }, [fetchContents])
 
@@ -343,7 +352,7 @@ export default function MyDrive() {
       const res = await apiFetch('/api/drive/folders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, parent_id: null }),
+        body: JSON.stringify({ name, parent_id: folderId || null }),
       })
       if (res.ok) {
         fetchContents()
@@ -352,6 +361,16 @@ export default function MyDrive() {
       // silently fail
     }
   }
+
+  const handleFolderClick = useCallback((folder) => {
+    navigate(`/drive/folder/${folder.id}`)
+  }, [navigate])
+
+  const handleFileInputChange = useCallback((e) => {
+    const files = Array.from(e.target.files)
+    if (files.length > 0) uploadFiles(files)
+    e.target.value = ''
+  }, [uploadFiles])
 
   const handleFileAction = useCallback((actionId, file) => {
     switch (actionId) {
@@ -490,40 +509,78 @@ export default function MyDrive() {
       {/* Toolbar row */}
       <div className="flex items-center justify-between mb-6">
         <nav aria-label="Breadcrumb" className="flex">
-          <ol className="inline-flex items-center space-x-1 md:space-x-2">
-            <li className="inline-flex items-center">
-              <a className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors" href="#">
-                <span className="material-symbols-outlined text-xl mr-1.5">cloud</span>
-                CloudSpace
-              </a>
-            </li>
-            <li>
-              <div className="flex items-center">
-                <span className="material-symbols-outlined text-slate-400 text-xl mx-1">chevron_right</span>
-                <span className="text-sm font-bold text-slate-900 dark:text-white">My Drive</span>
-              </div>
-            </li>
+          <ol className="inline-flex items-center space-x-0.5">
+            {breadcrumbs.map((crumb, index) => {
+              const isLast = index === breadcrumbs.length - 1
+              if (crumb.id === null) {
+                return (
+                  <li key="root" className="inline-flex items-center">
+                    {isLast ? (
+                      <span className="inline-flex items-center text-sm font-bold text-slate-900 dark:text-white">
+                        <span className="material-symbols-outlined text-xl mr-1.5">cloud</span>
+                        My Drive
+                      </span>
+                    ) : (
+                      <Link to="/drive" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">
+                        <span className="material-symbols-outlined text-xl mr-1.5">cloud</span>
+                        My Drive
+                      </Link>
+                    )}
+                  </li>
+                )
+              }
+              return (
+                <li key={crumb.id} className="inline-flex items-center">
+                  <span className="material-symbols-outlined text-slate-400 text-xl mx-0.5">chevron_right</span>
+                  {isLast ? (
+                    <span className="text-sm font-bold text-slate-900 dark:text-white">{crumb.name}</span>
+                  ) : (
+                    <Link to={`/drive/folder/${crumb.id}`} className="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">{crumb.name}</Link>
+                  )}
+                </li>
+              )
+            })}
           </ol>
         </nav>
 
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-2">
+          {/* New folder button */}
+          <button
+            onClick={() => setShowCreateFolder(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark hover:text-primary transition-colors"
+          >
+            <span className="material-symbols-outlined text-[18px]">create_new_folder</span>
+            New folder
+          </button>
+
+          {/* Upload button (discreet icon) */}
+          <button
+            onClick={() => fileInputRef.current?.click()}
+            title="Upload files"
+            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-border-dark transition-colors"
+          >
+            <span className="material-symbols-outlined text-[20px]">upload</span>
+          </button>
+          <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileInputChange} />
+
+          {/* View toggle */}
           <div className="flex items-center rounded-lg border border-slate-200 dark:border-border-dark overflow-hidden">
             <button
-              onClick={() => setView('grid')}
+              onClick={() => { setView('grid'); localStorage.setItem('cloudspace-view-mode', 'grid') }}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${view === 'grid' ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
               <span className="material-symbols-outlined text-[18px]">grid_view</span>
               Grid
             </button>
             <button
-              onClick={() => setView('list')}
+              onClick={() => { setView('list'); localStorage.setItem('cloudspace-view-mode', 'list') }}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${view === 'list' ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
               <span className="material-symbols-outlined text-[18px]">view_list</span>
               List
             </button>
           </div>
-          <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
+          <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
             <span className="material-symbols-outlined text-[18px]">filter_list</span>
             Filter
           </button>
@@ -535,7 +592,7 @@ export default function MyDrive() {
         <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Folders</h3>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
           {folders.map((folder) => (
-            <div key={folder.id} className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors shadow-sm group">
+            <div key={folder.id} onClick={() => handleFolderClick(folder)} className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors shadow-sm group">
               <div className="relative mr-3 flex-shrink-0">
                 <span className={`material-symbols-outlined text-2xl ${folder.icon_color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
                 {folder.is_locked && (
@@ -550,16 +607,6 @@ export default function MyDrive() {
             </div>
           ))}
 
-          {/* Create New Folder */}
-          <div
-            onClick={() => setShowCreateFolder(true)}
-            className="flex items-center p-3 border border-dashed border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors text-slate-500 dark:text-slate-400 hover:text-primary dark:hover:text-primary group"
-          >
-            <div className="w-8 h-8 rounded-full bg-slate-100 dark:bg-surface-dark flex items-center justify-center mr-3 group-hover:bg-blue-50 dark:group-hover:bg-blue-900/20 transition-colors">
-              <span className="material-symbols-outlined text-xl">add</span>
-            </div>
-            <span className="text-sm font-medium">Create New Folder</span>
-          </div>
         </div>
       </section>}
 
@@ -608,7 +655,7 @@ export default function MyDrive() {
               <tbody className="divide-y divide-slate-100 dark:divide-border-dark">
                 {/* Folder rows */}
                 {folders.map((folder) => (
-                  <tr key={folder.id} className="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
+                  <tr key={folder.id} onClick={() => handleFolderClick(folder)} className="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
                     <td className="px-5 py-3">
                       <div className="flex items-center gap-3">
                         <div className="relative flex-shrink-0">

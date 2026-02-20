@@ -3,7 +3,7 @@ import uuid
 from flask import Blueprint, request, jsonify, current_app, send_file, g
 from werkzeug.utils import secure_filename
 from src.extensions import db
-from src.models import File, ActivityLog
+from src.models import File, User, ActivityLog
 from src.utils import get_icon_for_mime, format_file_size
 from src.auth import login_required
 
@@ -14,7 +14,7 @@ MAX_FILE_SIZE = 100 * 1024 * 1024  # 100 MB per file
 ALLOWED_EXTENSIONS = {
     '.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
     '.txt', '.csv', '.md', '.rtf',
-    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.svg', '.bmp', '.ico',
+    '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.ico',
     '.mp4', '.mov', '.avi', '.mkv', '.webm',
     '.mp3', '.wav', '.ogg', '.flac', '.aac',
     '.zip', '.rar', '.7z', '.tar', '.gz',
@@ -27,8 +27,9 @@ ALLOWED_MIME_PREFIXES = [
     'application/zip', 'application/x-rar', 'application/x-7z',
     'application/msword', 'application/vnd.openxmlformats-officedocument',
     'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
-    'application/octet-stream',
 ]
+
+BLOCKED_MIME_TYPES = {'image/svg+xml'}
 
 
 @files_bp.route('/api/files/upload', methods=['POST'])
@@ -54,6 +55,8 @@ def upload_file():
 
     # Validate MIME type
     mime_type = file.content_type or 'application/octet-stream'
+    if mime_type in BLOCKED_MIME_TYPES:
+        return jsonify({'error': f'File type {mime_type} is not allowed'}), 400
     if not any(mime_type.startswith(p) for p in ALLOWED_MIME_PREFIXES):
         return jsonify({'error': f'File type {mime_type} is not allowed'}), 400
 
@@ -63,6 +66,11 @@ def upload_file():
     file.seek(0)
     if file_size > MAX_FILE_SIZE:
         return jsonify({'error': 'File too large. Maximum size is 100 MB'}), 413
+
+    # Check user storage quota
+    user = User.query.get(g.current_user_id)
+    if user and (user.storage_used + file_size) > user.storage_limit:
+        return jsonify({'error': 'Storage quota exceeded. Free up space or upgrade your plan.'}), 413
 
     parent_id = request.form.get('parent_id')
     if parent_id in ('null', '', 'undefined', 'None'):
@@ -95,6 +103,10 @@ def upload_file():
         storage_path=save_path,
     )
     db.session.add(new_file)
+
+    # Update user storage usage
+    if user:
+        user.storage_used = (user.storage_used or 0) + file_size
 
     log = ActivityLog(
         user_id=g.current_user_id,

@@ -26,7 +26,7 @@ function App() {
         <Route index element={<Navigate to="/dashboard" replace />} />
         <Route path="dashboard" element={<Dashboard />} />
         <Route path="drive" element={<MyDrive />} />
-        <Route path="drive/folder/:folderId" element={<FileExplorerList />} />
+        <Route path="drive/folder/:folderId" element={<MyDrive />} />
         <Route path="drive/folder/:folderId/detail" element={<FileExplorerDetail />} />
         <Route path="shared" element={<SharedWithMe />} />
         <Route path="recent" element={<Recent />} />

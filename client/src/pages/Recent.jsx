@@ -20,10 +20,10 @@ const lastWeekFiles = [
 function FileRow({ file }) {
   return (
     <tr className="group hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors cursor-pointer">
-      <td className="px-6 py-4 w-[45%]">
-        <div className="flex items-center gap-4">
-          <div className={`relative w-10 h-10 flex-shrink-0 flex items-center justify-center ${file.iconBg} rounded-lg`}>
-            <span className={`material-symbols-outlined text-2xl ${file.iconColor}`}>{file.icon}</span>
+      <td className="px-5 py-3 w-[45%]">
+        <div className="flex items-center gap-3">
+          <div className={`w-8 h-8 flex-shrink-0 flex items-center justify-center ${file.iconBg} rounded-lg`}>
+            <span className={`material-symbols-outlined text-lg ${file.iconColor}`}>{file.icon}</span>
           </div>
           <div className="min-w-0">
             <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{file.name}</p>
@@ -31,22 +31,22 @@ function FileRow({ file }) {
           </div>
         </div>
       </td>
-      <td className="px-6 py-4 w-[20%] hidden sm:table-cell">
+      <td className="px-5 py-3 w-[20%] hidden sm:table-cell">
         <div className="flex items-center gap-2">
-          <div className="w-6 h-6 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center flex-shrink-0">
-            <span className="text-[9px] font-bold text-white">
+          <div className="w-5 h-5 rounded-full bg-slate-300 dark:bg-slate-600 flex items-center justify-center flex-shrink-0">
+            <span className="text-[8px] font-bold text-white">
               {file.owner.split(' ').map(w => w[0]).join('')}
             </span>
           </div>
           <span className="text-sm text-slate-600 dark:text-slate-300">{file.owner}</span>
         </div>
       </td>
-      <td className="px-6 py-4 w-[25%] hidden md:table-cell">
+      <td className="px-5 py-3 w-[25%] hidden md:table-cell">
         <span className="text-sm text-slate-500 dark:text-slate-400">{file.activity}</span>
       </td>
-      <td className="px-6 py-4 w-[10%] text-right">
-        <FileContextMenu className="p-1.5 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
-          <span className="material-symbols-outlined">more_vert</span>
+      <td className="px-5 py-3 w-[10%] text-right">
+        <FileContextMenu className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors">
+          <span className="material-symbols-outlined text-[18px]">more_vert</span>
         </FileContextMenu>
       </td>
     </tr>
@@ -92,7 +92,7 @@ export default function Recent() {
       </div>
 
       {/* Column headers */}
-      <div className="flex items-center px-6 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+      <div className="flex items-center px-5 mb-2 text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
         <div className="w-[45%]">Name</div>
         <div className="w-[20%] hidden sm:block">Owner</div>
         <div className="w-[25%] hidden md:block">Activity</div>

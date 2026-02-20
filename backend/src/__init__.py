@@ -21,10 +21,21 @@ def create_app():
     os.makedirs(os.path.join(upload_folder, 'previews'), exist_ok=True)
 
     # Init extensions
-    from src.extensions import db, migrate, cors
+    from src.extensions import db, migrate, cors, limiter
     db.init_app(app)
     migrate.init_app(app, db)
-    cors.init_app(app, resources={r"/api/*": {"origins": "*"}})
+    limiter.init_app(app)
+
+    allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
+    cors.init_app(app, resources={r"/api/*": {"origins": allowed_origins}})
+
+    # Security headers
+    @app.after_request
+    def set_security_headers(response):
+        response.headers['X-Content-Type-Options'] = 'nosniff'
+        response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        return response
 
     # Register blueprints
     from src.routes import register_blueprints

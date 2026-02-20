@@ -4,9 +4,9 @@ services:
     container_name: CloudSpace-Postgres
     restart: unless-stopped
     environment:
-      POSTGRES_USER: cloudspace
-      POSTGRES_PASSWORD: cloudspace_secret
-      POSTGRES_DB: cloudspace_db
+      POSTGRES_USER: ${POSTGRES_USER:-cloudspace}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}
+      POSTGRES_DB: ${POSTGRES_DB:-cloudspace_db}
     volumes:
       - pgdata:/var/lib/postgresql/data
     expose:
@@ -14,7 +14,7 @@ services:
     networks:
       - my-net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U cloudspace -d cloudspace_db"]
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-cloudspace} -d ${POSTGRES_DB:-cloudspace_db}"]
       interval: 5s
       timeout: 5s
       retries: 5
@@ -28,9 +28,10 @@ services:
     expose:
       - "5000"
     environment:
-      SECRET_KEY: change-me-in-production-use-long-random-string
-      DATABASE_URL: postgresql://cloudspace:cloudspace_secret@db:5432/cloudspace_db
+      SECRET_KEY: ${SECRET_KEY:?Set SECRET_KEY in .env}
+      DATABASE_URL: postgresql://${POSTGRES_USER:-cloudspace}:${POSTGRES_PASSWORD:?Set POSTGRES_PASSWORD in .env}@db:5432/${POSTGRES_DB:-cloudspace_db}
       UPLOAD_FOLDER: /app/uploads
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:5173}
     volumes:
       - uploads_data:/app/uploads
     depends_on:
@@ -46,7 +47,7 @@ services:
     container_name: Frontend-Vite
     restart: unless-stopped
     ports:
-      - "80:80"
+      - "8080:80"
     depends_on:
       - api
     networks:

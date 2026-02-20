@@ -26,6 +26,37 @@ function formatSize(bytes) {
   return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB'
 }
 
+function StatusIcon({ allDone, errorCount }) {
+  if (allDone && errorCount === 0) {
+    return (
+      <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
+        <span className="material-symbols-outlined text-sm text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+      </div>
+    )
+  }
+  if (allDone && errorCount > 0) {
+    return (
+      <div className="w-6 h-6 rounded-full bg-amber-500/15 flex items-center justify-center">
+        <span className="material-symbols-outlined text-sm text-amber-400" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+      </div>
+    )
+  }
+  return (
+    <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center">
+      <svg className="w-3.5 h-3.5 text-primary animate-spin" viewBox="0 0 24 24" fill="none">
+        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+      </svg>
+    </div>
+  )
+}
+
+function getStatusMessage({ allDone, errorCount, doneCount, total }) {
+  if (allDone && errorCount > 0) return `${doneCount} uploaded, ${errorCount} failed`
+  if (allDone) return `${doneCount} upload${doneCount > 1 ? 's' : ''} complete`
+  return `Uploading ${doneCount}/${total}...`
+}
+
 export default function UploadToaster() {
   const { queue, visible, clearDone, dismiss } = useUpload()
   const [mounted, setMounted] = useState(false)
@@ -79,29 +110,9 @@ export default function UploadToaster() {
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
-            {allDone && errorCount === 0 ? (
-              <div className="w-6 h-6 rounded-full bg-emerald-500/15 flex items-center justify-center">
-                <span className="material-symbols-outlined text-sm text-emerald-400" style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
-              </div>
-            ) : allDone && errorCount > 0 ? (
-              <div className="w-6 h-6 rounded-full bg-amber-500/15 flex items-center justify-center">
-                <span className="material-symbols-outlined text-sm text-amber-400" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
-              </div>
-            ) : (
-              <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center">
-                <svg className="w-3.5 h-3.5 text-primary animate-spin" viewBox="0 0 24 24" fill="none">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
-                </svg>
-              </div>
-            )}
+            <StatusIcon allDone={allDone} errorCount={errorCount} />
             <span className="text-[13px] font-semibold text-slate-900 dark:text-white">
-              {allDone
-                ? errorCount > 0
-                  ? `${doneCount} uploaded, ${errorCount} failed`
-                  : `${doneCount} upload${doneCount > 1 ? 's' : ''} complete`
-                : `Uploading ${doneCount}/${total}...`
-              }
+              {getStatusMessage({ allDone, errorCount, doneCount, total })}
             </span>
           </div>
           <div className="flex items-center gap-1">

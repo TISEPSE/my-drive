@@ -19,65 +19,79 @@ export default function Dashboard() {
   const [onlineCount, setOnlineCount] = useState(0)
 
   useEffect(() => {
-    // Fetch all dashboard data in parallel
-    Promise.all([
+    // Fetch all dashboard data in parallel with graceful degradation
+    Promise.allSettled([
       apiFetch('/api/dashboard/stats').then(r => r.json()),
       apiFetch('/api/user/storage').then(r => r.json()),
       apiFetch('/api/dashboard/activity?limit=6').then(r => r.json()),
       apiFetch('/api/dashboard/quick-access?limit=4').then(r => r.json()),
       apiFetch('/api/dashboard/team').then(r => r.json()),
-    ]).then(([statsData, storageData, activityData, quickData, teamData]) => {
-      setStats([
-        { label: 'Total Files', value: statsData.total_files.toLocaleString(), change: statsData.total_files_change, icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
-        { label: 'Storage Used', value: statsData.storage_used, change: `${statsData.storage_percentage}% of ${storageData.formatted_limit}`, icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
-        { label: 'Shared Files', value: statsData.shared_files.toString(), change: statsData.shared_files_change, icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
-        { label: 'Trash Items', value: statsData.trash_items.toString(), change: `Auto-delete in ${statsData.trash_auto_delete}`, icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
-      ])
-
-      const colorMap = {
-        'Images': 'bg-indigo-500',
-        'Videos': 'bg-purple-500',
-        'Documents': 'bg-blue-500',
-        'Spreadsheets': 'bg-green-500',
-        'Other': 'bg-slate-400',
+    ]).then(([statsResult, storageResult, activityResult, quickResult, teamResult]) => {
+      if (statsResult.status === 'fulfilled') {
+        const statsData = statsResult.value
+        const storageLimit = storageResult.status === 'fulfilled' ? storageResult.value.formatted_limit : '20 GB'
+        setStats([
+          { label: 'Total Files', value: statsData.total_files.toLocaleString(), change: statsData.total_files_change, icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
+          { label: 'Storage Used', value: statsData.storage_used, change: `${statsData.storage_percentage}% of ${storageLimit}`, icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
+          { label: 'Shared Files', value: statsData.shared_files.toString(), change: statsData.shared_files_change, icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
+          { label: 'Trash Items', value: statsData.trash_items.toString(), change: `Auto-delete in ${statsData.trash_auto_delete}`, icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
+        ])
       }
-      setStorageByType(storageData.breakdown.map(item => ({
-        type: item.type,
-        size: item.formatted,
-        percent: item.percent,
-        color: colorMap[item.type] || 'bg-slate-400',
-        icon: item.icon,
-      })))
-      setStorageTotal({ used: storageData.formatted_used, limit: storageData.formatted_limit })
 
-      setActivityFeed(activityData.activities.map(a => ({
-        user: a.user.name,
-        initials: a.user.initials,
-        color: a.user.color,
-        action: a.action,
-        target: a.target,
-        time: a.time,
-      })))
+      if (storageResult.status === 'fulfilled') {
+        const storageData = storageResult.value
+        const colorMap = {
+          'Images': 'bg-indigo-500',
+          'Videos': 'bg-purple-500',
+          'Documents': 'bg-blue-500',
+          'Spreadsheets': 'bg-green-500',
+          'Other': 'bg-slate-400',
+        }
+        setStorageByType(storageData.breakdown.map(item => ({
+          type: item.type,
+          size: item.formatted,
+          percent: item.percent,
+          color: colorMap[item.type] || 'bg-slate-400',
+          icon: item.icon,
+        })))
+        setStorageTotal({ used: storageData.formatted_used, limit: storageData.formatted_limit })
+      }
 
-      setQuickAccessFiles(quickData.files.map(f => ({
-        name: f.name,
-        icon: f.icon,
-        iconColor: f.icon_color,
-        iconBg: f.icon_bg,
-        subtitle: f.subtitle,
-        badge: f.is_owner ? null : 'Shared',
-      })))
+      if (activityResult.status === 'fulfilled') {
+        setActivityFeed(activityResult.value.activities.map((a, i) => ({
+          id: `${i}-${a.target}`,
+          user: a.user.name,
+          initials: a.user.initials,
+          color: a.user.color,
+          action: a.action,
+          target: a.target,
+          time: a.time,
+        })))
+      }
 
-      setTeamMembers(teamData.members.map(m => ({
-        name: m.name,
-        initials: m.initials,
-        color: m.color,
-        role: m.role,
-        files: m.files_count,
-        online: m.is_online,
-      })))
-      setOnlineCount(teamData.online_count)
-    }).catch(err => console.error('Dashboard fetch error:', err))
+      if (quickResult.status === 'fulfilled') {
+        setQuickAccessFiles(quickResult.value.files.map(f => ({
+          name: f.name,
+          icon: f.icon,
+          iconColor: f.icon_color,
+          iconBg: f.icon_bg,
+          subtitle: f.subtitle,
+          badge: f.is_owner ? null : 'Shared',
+        })))
+      }
+
+      if (teamResult.status === 'fulfilled') {
+        setTeamMembers(teamResult.value.members.map(m => ({
+          name: m.name,
+          initials: m.initials,
+          color: m.color,
+          role: m.role,
+          files: m.files_count,
+          online: m.is_online,
+        })))
+        setOnlineCount(teamResult.value.online_count)
+      }
+    })
   }, [])
 
   return (
@@ -168,7 +182,7 @@ export default function Dashboard() {
           <div className="space-y-0">
             {activityFeed.map((item, index) => (
               <div
-                key={index}
+                key={item.id}
                 className={`flex items-center gap-3 py-3 ${
                   index < activityFeed.length - 1 ? 'border-b border-slate-100 dark:border-border-dark' : ''
                 }`}

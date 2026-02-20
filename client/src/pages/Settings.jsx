@@ -338,8 +338,8 @@ function SecurityTab() {
             { device: 'Chrome on macOS', location: 'Paris, France', current: true, time: 'Now' },
             { device: 'Firefox on Windows', location: 'Lyon, France', current: false, time: '2 hours ago' },
             { device: 'CloudSpace iOS App', location: 'Paris, France', current: false, time: 'Yesterday' },
-          ].map((s, i) => (
-            <div key={i} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-border-dark last:border-b-0">
+          ].map((s) => (
+            <div key={s.device} className="flex items-center justify-between py-3 border-b border-slate-100 dark:border-border-dark last:border-b-0">
               <div className="flex items-center gap-3">
                 <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-background-dark flex items-center justify-center">
                   <span className="material-symbols-outlined text-lg text-slate-500 dark:text-slate-400">
@@ -636,7 +636,7 @@ function BreakdownList({ breakdown }) {
       {breakdown.map((item, i) => {
         const color = CHART_COLORS[i % CHART_COLORS.length];
         return (
-          <div key={i} className="flex items-center gap-3 py-2 px-2.5 rounded-lg bg-slate-50 dark:bg-background-dark/50">
+          <div key={item.type} className="flex items-center gap-3 py-2 px-2.5 rounded-lg bg-slate-50 dark:bg-background-dark/50">
             <div className={`w-7 h-7 rounded-lg ${CHART_BG_CLASSES[i % CHART_BG_CLASSES.length]} flex items-center justify-center flex-shrink-0`}>
               <span className={`material-symbols-outlined text-base ${CHART_TEXT_CLASSES[i % CHART_TEXT_CLASSES.length]}`}>{item.icon}</span>
             </div>
