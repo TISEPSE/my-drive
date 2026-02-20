@@ -180,11 +180,11 @@ export default function FileExplorerDetail() {
                   </td>
                   <td className="px-4 py-3.5">
                     <div className="flex items-center gap-1.5">
-                      {file.owners.map((owner, idx) =>
+                      {file.owners.map((owner) =>
                         owner.badge ? (
-                          <span key={idx} className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{owner.badge}</span>
+                          <span key={owner.badge} className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{owner.badge}</span>
                         ) : (
-                          <div key={idx} className={`w-7 h-7 rounded-full ${owner.color} flex items-center justify-center text-[10px] font-semibold text-white -ml-1 first:ml-0 ring-2 ring-white dark:ring-background-dark`}>
+                          <div key={owner.initials} className={`w-7 h-7 rounded-full ${owner.color} flex items-center justify-center text-[10px] font-semibold text-white -ml-1 first:ml-0 ring-2 ring-white dark:ring-background-dark`}>
                             {owner.initials}
                           </div>
                         )

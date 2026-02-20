@@ -20,7 +20,7 @@ def list_trash():
 
     def _build_location(f):
         if f.original_parent_id:
-            parent = File.query.get(f.original_parent_id)
+            parent = db.session.get(File, f.original_parent_id)
             if parent:
                 return parent.name
         return 'My Drive'
@@ -95,7 +95,7 @@ def delete_permanently(file_id):
     freed = _delete_file_tree(f)
 
     # Update user storage
-    user = User.query.get(g.current_user_id)
+    user = db.session.get(User, g.current_user_id)
     if user:
         user.storage_used = max(0, (user.storage_used or 0) - freed)
 
@@ -116,7 +116,7 @@ def empty_trash():
     for f in items:
         total_freed += _delete_file_tree(f)
 
-    user = User.query.get(g.current_user_id)
+    user = db.session.get(User, g.current_user_id)
     if user:
         user.storage_used = max(0, (user.storage_used or 0) - total_freed)
 

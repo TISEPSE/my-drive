@@ -69,7 +69,7 @@ export default function History() {
             <div className="bg-white dark:bg-surface-dark rounded-xl border border-slate-200 dark:border-border-dark overflow-hidden">
               {group.events.map((event, idx) => (
                 <div
-                  key={idx}
+                  key={`${event.time}-${event.target}`}
                   className={`flex items-center gap-3 px-5 py-3 hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors ${
                     idx < group.events.length - 1 ? 'border-b border-slate-100 dark:border-border-dark' : ''
                   }`}

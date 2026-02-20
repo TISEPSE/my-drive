@@ -38,7 +38,7 @@ ACTION_VERBS = {
 @dashboard_bp.route('/api/dashboard/stats')
 @login_required
 def dashboard_stats():
-    user = User.query.get(g.current_user_id)
+    user = db.session.get(User, g.current_user_id)
     now = datetime.now(timezone.utc)
     week_ago = now - timedelta(days=7)
 
@@ -91,11 +91,11 @@ def dashboard_activity():
 
     result = []
     for act in activities:
-        user = User.query.get(act.user_id)
+        user = db.session.get(User, act.user_id)
         if not user:
             continue
 
-        file_obj = File.query.get(act.file_id) if act.file_id else None
+        file_obj = db.session.get(File, act.file_id) if act.file_id else None
         initials = user.first_name[0] + user.last_name[0]
 
         is_current = user.id == g.current_user_id
@@ -139,7 +139,7 @@ def dashboard_quick_access():
             continue
         seen_files.add(act.file_id)
 
-        file_obj = File.query.get(act.file_id)
+        file_obj = db.session.get(File, act.file_id)
         if not file_obj or file_obj.is_trashed:
             continue
 

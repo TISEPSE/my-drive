@@ -95,13 +95,6 @@ export default function Header() {
 
       {/* Header Actions */}
       <div className="flex items-center gap-2 ml-4">
-        <button
-          onClick={() => navigate('/dashboard')}
-          className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors"
-          title="Dashboard"
-        >
-          <span className="material-symbols-outlined text-[22px] leading-none">dashboard</span>
-        </button>
         <button className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
           <span className="material-symbols-outlined text-[22px] leading-none">notifications</span>
         </button>

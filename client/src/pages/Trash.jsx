@@ -1,6 +1,19 @@
 import { useState, useEffect, useCallback } from 'react'
 import { apiFetch } from '../lib/api'
 
+function TrashItemIcon({ icon, icon_color, icon_bg, is_folder }) {
+  return (
+    <div className={`w-8 h-8 rounded-lg ${icon_bg} flex items-center justify-center flex-shrink-0`}>
+      <span
+        className={`material-symbols-outlined text-lg ${icon_color}`}
+        style={is_folder ? { fontVariationSettings: "'FILL' 1" } : undefined}
+      >
+        {icon}
+      </span>
+    </div>
+  )
+}
+
 export default function Trash() {
   const [items, setItems] = useState([])
   const [loading, setLoading] = useState(true)
@@ -114,20 +127,7 @@ export default function Trash() {
                   {/* Name */}
                   <td className="px-5 py-2.5">
                     <div className="flex items-center gap-3">
-                      <div
-                        className={`w-8 h-8 rounded-lg ${item.icon_bg} flex items-center justify-center flex-shrink-0`}
-                      >
-                        <span
-                          className={`material-symbols-outlined text-lg ${item.icon_color}`}
-                          style={
-                            item.is_folder
-                              ? { fontVariationSettings: "'FILL' 1" }
-                              : undefined
-                          }
-                        >
-                          {item.icon}
-                        </span>
-                      </div>
+                      <TrashItemIcon icon={item.icon} icon_color={item.icon_color} icon_bg={item.icon_bg} is_folder={item.is_folder} />
                       <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
                         {item.name}
                       </span>

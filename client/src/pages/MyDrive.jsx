@@ -252,6 +252,94 @@ function ConfirmTrashModal({ file, onClose, onConfirm }) {
   )
 }
 
+function DriveLoadingSkeleton() {
+  return (
+    <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-pulse">
+      <div className="flex items-center justify-between mb-6">
+        <div className="flex items-center gap-2">
+          <div className="w-24 h-4 bg-slate-200 dark:bg-border-dark rounded" />
+          <div className="w-4 h-4 bg-slate-200 dark:bg-border-dark rounded" />
+          <div className="w-16 h-4 bg-slate-200 dark:bg-border-dark rounded" />
+        </div>
+        <div className="flex items-center gap-3">
+          <div className="w-28 h-8 bg-slate-200 dark:bg-border-dark rounded-lg" />
+          <div className="w-20 h-8 bg-slate-200 dark:bg-border-dark rounded-lg" />
+        </div>
+      </div>
+      <div className="mb-8">
+        <div className="w-16 h-3 bg-slate-200 dark:bg-border-dark rounded mb-3" />
+        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
+          {[...Array(4)].map((_, i) => (
+            <div key={i} className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg">
+              <div className="w-7 h-7 bg-slate-200 dark:bg-border-dark rounded mr-3 flex-shrink-0" />
+              <div className="flex-1 space-y-1.5">
+                <div className="w-28 h-3.5 bg-slate-200 dark:bg-border-dark rounded" />
+                <div className="w-14 h-2.5 bg-slate-100 dark:bg-border-dark/60 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div>
+        <div className="w-12 h-3 bg-slate-200 dark:bg-border-dark rounded mb-3" />
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {[...Array(12)].map((_, i) => (
+            <div key={i} className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg p-2">
+              <div className="aspect-[4/3] bg-slate-100 dark:bg-border-dark/50 rounded-md mb-2" />
+              <div className="space-y-1.5">
+                <div className="w-3/4 h-3 bg-slate-200 dark:bg-border-dark rounded" />
+                <div className="w-1/2 h-2.5 bg-slate-100 dark:bg-border-dark/60 rounded" />
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function DropZoneOverlay({ isDragging, dragFileCount }) {
+  if (!isDragging) return null
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-[#101922]/80 backdrop-blur-sm" />
+      <div className="relative z-10">
+        <div className="relative">
+          <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-blue-400 to-cyan-400 opacity-80 animate-pulse" />
+          <div className="relative bg-[#1A2633] rounded-2xl p-12 min-w-[420px] border border-primary/20">
+            <div className="absolute inset-0 overflow-hidden rounded-2xl">
+              <div className="absolute top-6 left-8 w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '0s', animationDuration: '2s' }} />
+              <div className="absolute top-12 right-12 w-1.5 h-1.5 rounded-full bg-cyan-400/40 animate-bounce" style={{ animationDelay: '0.3s', animationDuration: '2.2s' }} />
+              <div className="absolute bottom-10 left-16 w-1 h-1 rounded-full bg-blue-300/40 animate-bounce" style={{ animationDelay: '0.6s', animationDuration: '1.8s' }} />
+              <div className="absolute bottom-16 right-8 w-2 h-2 rounded-full bg-primary/30 animate-bounce" style={{ animationDelay: '0.9s', animationDuration: '2.4s' }} />
+            </div>
+            <div className="flex flex-col items-center text-center relative z-10">
+              <div className="relative mb-5">
+                <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl scale-150" />
+                <div className="relative w-20 h-20 rounded-full bg-primary/10 border-2 border-dashed border-primary/50 flex items-center justify-center">
+                  <span className="material-symbols-outlined text-4xl text-primary animate-bounce" style={{ animationDuration: '1.5s' }}>cloud_upload</span>
+                </div>
+              </div>
+              <h3 className="text-xl font-bold text-white mb-1.5">Drop to upload</h3>
+              <p className="text-sm text-slate-400 mb-3">
+                Files will be added to <span className="text-primary font-medium">My Drive</span>
+              </p>
+              {dragFileCount > 0 && (
+                <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
+                  <span className="material-symbols-outlined text-sm text-primary">draft</span>
+                  <span className="text-xs font-medium text-primary">
+                    {dragFileCount} {dragFileCount === 1 ? 'file' : 'files'} selected
+                  </span>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function MyDrive() {
   const navigate = useNavigate()
   const { folderId } = useParams()
@@ -396,49 +484,7 @@ export default function MyDrive() {
   }, [trashTarget, fetchContents])
 
   if (!ready && showSkeleton) {
-    return (
-      <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-pulse">
-        <div className="flex items-center justify-between mb-6">
-          <div className="flex items-center gap-2">
-            <div className="w-24 h-4 bg-slate-200 dark:bg-border-dark rounded" />
-            <div className="w-4 h-4 bg-slate-200 dark:bg-border-dark rounded" />
-            <div className="w-16 h-4 bg-slate-200 dark:bg-border-dark rounded" />
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="w-28 h-8 bg-slate-200 dark:bg-border-dark rounded-lg" />
-            <div className="w-20 h-8 bg-slate-200 dark:bg-border-dark rounded-lg" />
-          </div>
-        </div>
-        <div className="mb-8">
-          <div className="w-16 h-3 bg-slate-200 dark:bg-border-dark rounded mb-3" />
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-            {[...Array(4)].map((_, i) => (
-              <div key={i} className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg">
-                <div className="w-7 h-7 bg-slate-200 dark:bg-border-dark rounded mr-3 flex-shrink-0" />
-                <div className="flex-1 space-y-1.5">
-                  <div className="w-28 h-3.5 bg-slate-200 dark:bg-border-dark rounded" />
-                  <div className="w-14 h-2.5 bg-slate-100 dark:bg-border-dark/60 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-        <div>
-          <div className="w-12 h-3 bg-slate-200 dark:bg-border-dark rounded mb-3" />
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {[...Array(12)].map((_, i) => (
-              <div key={i} className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg p-2">
-                <div className="aspect-[4/3] bg-slate-100 dark:bg-border-dark/50 rounded-md mb-2" />
-                <div className="space-y-1.5">
-                  <div className="w-3/4 h-3 bg-slate-200 dark:bg-border-dark rounded" />
-                  <div className="w-1/2 h-2.5 bg-slate-100 dark:bg-border-dark/60 rounded" />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
+    return <DriveLoadingSkeleton />
   }
 
   if (!ready) return null
@@ -453,58 +499,7 @@ export default function MyDrive() {
       onDrop={handleDrop}
     >
       {/* Drop Zone Overlay */}
-      {isDragging && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center">
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-[#101922]/80 backdrop-blur-sm" />
-
-          {/* Drop zone card */}
-          <div className="relative z-10">
-            <div className="relative">
-              {/* Animated border ring */}
-              <div className="absolute -inset-[2px] rounded-2xl bg-gradient-to-r from-primary via-blue-400 to-cyan-400 opacity-80 animate-pulse" />
-
-              <div className="relative bg-[#1A2633] rounded-2xl p-12 min-w-[420px] border border-primary/20">
-                {/* Floating particles */}
-                <div className="absolute inset-0 overflow-hidden rounded-2xl">
-                  <div className="absolute top-6 left-8 w-2 h-2 rounded-full bg-primary/40 animate-bounce" style={{ animationDelay: '0s', animationDuration: '2s' }} />
-                  <div className="absolute top-12 right-12 w-1.5 h-1.5 rounded-full bg-cyan-400/40 animate-bounce" style={{ animationDelay: '0.3s', animationDuration: '2.2s' }} />
-                  <div className="absolute bottom-10 left-16 w-1 h-1 rounded-full bg-blue-300/40 animate-bounce" style={{ animationDelay: '0.6s', animationDuration: '1.8s' }} />
-                  <div className="absolute bottom-16 right-8 w-2 h-2 rounded-full bg-primary/30 animate-bounce" style={{ animationDelay: '0.9s', animationDuration: '2.4s' }} />
-                </div>
-
-                <div className="flex flex-col items-center text-center relative z-10">
-                  {/* Upload icon with glow */}
-                  <div className="relative mb-5">
-                    <div className="absolute inset-0 bg-primary/20 rounded-full blur-xl scale-150" />
-                    <div className="relative w-20 h-20 rounded-full bg-primary/10 border-2 border-dashed border-primary/50 flex items-center justify-center">
-                      <span className="material-symbols-outlined text-4xl text-primary animate-bounce" style={{ animationDuration: '1.5s' }}>
-                        cloud_upload
-                      </span>
-                    </div>
-                  </div>
-
-                  <h3 className="text-xl font-bold text-white mb-1.5">
-                    Drop to upload
-                  </h3>
-                  <p className="text-sm text-slate-400 mb-3">
-                    Files will be added to <span className="text-primary font-medium">My Drive</span>
-                  </p>
-
-                  {dragFileCount > 0 && (
-                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-primary/10 border border-primary/20">
-                      <span className="material-symbols-outlined text-sm text-primary">draft</span>
-                      <span className="text-xs font-medium text-primary">
-                        {dragFileCount} {dragFileCount === 1 ? 'file' : 'files'} selected
-                      </span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      <DropZoneOverlay isDragging={isDragging} dragFileCount={dragFileCount} />
 
       {/* Toolbar row */}
       <div className="flex items-center justify-between mb-6">
@@ -553,13 +548,13 @@ export default function MyDrive() {
             New folder
           </button>
 
-          {/* Upload button (discreet icon) */}
+          {/* Upload button */}
           <button
             onClick={() => fileInputRef.current?.click()}
-            title="Upload files"
-            className="w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-primary hover:bg-slate-100 dark:hover:bg-border-dark transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark hover:text-primary transition-colors"
           >
-            <span className="material-symbols-outlined text-[20px]">upload</span>
+            <span className="material-symbols-outlined text-[18px]">upload</span>
+            Upload
           </button>
           <input ref={fileInputRef} type="file" multiple className="hidden" onChange={handleFileInputChange} />
 

@@ -1,8 +1,36 @@
 import os
+import logging
+import json
+import sys
 from flask import Flask
 from dotenv import load_dotenv
 
 load_dotenv()
+
+
+class JsonFormatter(logging.Formatter):
+    def format(self, record):
+        log = {
+            'level': record.levelname,
+            'message': record.getMessage(),
+            'logger': record.name,
+        }
+        if record.exc_info:
+            log['exception'] = self.formatException(record.exc_info)
+        return json.dumps(log)
+
+def configure_logging():
+    handler = logging.StreamHandler(sys.stdout)
+    handler.setFormatter(JsonFormatter())
+    root = logging.getLogger()
+    root.handlers = []
+    root.addHandler(handler)
+    root.setLevel(logging.INFO)
+    # Silence noisy loggers
+    logging.getLogger('werkzeug').setLevel(logging.WARNING)
+
+configure_logging()
+logger = logging.getLogger(__name__)
 
 
 def create_app():
@@ -34,7 +62,10 @@ def create_app():
     def set_security_headers(response):
         response.headers['X-Content-Type-Options'] = 'nosniff'
         response.headers['X-Frame-Options'] = 'DENY'
+        response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
+        response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
+        response.headers['Content-Security-Policy'] = "default-src 'self'"
         return response
 
     # Register blueprints
@@ -48,4 +79,5 @@ def create_app():
         from src.seed import seed_data
         seed_data()
 
+    logger.info('CloudSpace app started', extra={})
     return app

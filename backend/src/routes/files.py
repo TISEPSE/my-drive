@@ -1,11 +1,15 @@
 import os
 import uuid
+import logging
+import magic
 from flask import Blueprint, request, jsonify, current_app, send_file, g
 from werkzeug.utils import secure_filename
 from src.extensions import db
 from src.models import File, User, ActivityLog
 from src.utils import get_icon_for_mime, format_file_size
 from src.auth import login_required
+
+logger = logging.getLogger(__name__)
 
 files_bp = Blueprint('files', __name__)
 
@@ -53,12 +57,14 @@ def upload_file():
     if ext and ext not in ALLOWED_EXTENSIONS:
         return jsonify({'error': f'File type {ext} is not allowed'}), 400
 
-    # Validate MIME type
-    mime_type = file.content_type or 'application/octet-stream'
-    if mime_type in BLOCKED_MIME_TYPES:
-        return jsonify({'error': f'File type {mime_type} is not allowed'}), 400
-    if not any(mime_type.startswith(p) for p in ALLOWED_MIME_PREFIXES):
-        return jsonify({'error': f'File type {mime_type} is not allowed'}), 400
+    # Validate MIME type via magic bytes (ignores browser-supplied Content-Type)
+    real_mime = magic.from_buffer(file.read(2048), mime=True)
+    file.seek(0)
+    if real_mime in BLOCKED_MIME_TYPES:
+        return jsonify({'error': f'File type {real_mime} is not allowed'}), 400
+    if not any(real_mime.startswith(p) for p in ALLOWED_MIME_PREFIXES):
+        return jsonify({'error': f'File type {real_mime} is not allowed'}), 400
+    mime_type = real_mime
 
     # Check file size
     file.seek(0, os.SEEK_END)
@@ -68,7 +74,7 @@ def upload_file():
         return jsonify({'error': 'File too large. Maximum size is 100 MB'}), 413
 
     # Check user storage quota
-    user = User.query.get(g.current_user_id)
+    user = db.session.get(User, g.current_user_id)
     if user and (user.storage_used + file_size) > user.storage_limit:
         return jsonify({'error': 'Storage quota exceeded. Free up space or upgrade your plan.'}), 413
 
@@ -116,6 +122,7 @@ def upload_file():
     )
     db.session.add(log)
     db.session.commit()
+    logger.info('File uploaded: %s (%s bytes) by user %s', new_file.name, file_size, g.current_user_id)
 
     return jsonify({
         'id': new_file.id,
@@ -155,6 +162,7 @@ def trash_file(file_id):
     )
     db.session.add(log)
     db.session.commit()
+    logger.info('File trashed: %s by user %s', f.name, g.current_user_id)
 
     return jsonify({
         'id': f.id,
@@ -184,6 +192,7 @@ def download_file(file_id):
         return jsonify({'error': 'File not found on disk'}), 404
 
     inline = request.args.get('inline') == 'true'
+    logger.info('File downloaded: %s by user %s', f.name, g.current_user_id)
     return send_file(
         f.storage_path,
         mimetype=f.mime_type or 'application/octet-stream',

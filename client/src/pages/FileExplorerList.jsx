@@ -69,6 +69,41 @@ const tableFiles = [
   },
 ];
 
+function FileItemIcon({ file }) {
+  if (file.type === 'folder') {
+    return (
+      <span className={`material-symbols-outlined ${file.iconSize} ${file.iconColor} fill-current`}>
+        {file.icon}
+      </span>
+    )
+  }
+  return (
+    <div className={`w-9 h-9 rounded-lg ${file.iconBg} flex items-center justify-center flex-shrink-0`}>
+      <span className={`material-symbols-outlined ${file.iconSize} ${file.iconColor}`}>
+        {file.icon}
+      </span>
+    </div>
+  )
+}
+
+function OwnerList({ owners }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {owners.map((owner) =>
+        owner.badge ? (
+          <span key={owner.badge} className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">
+            {owner.badge}
+          </span>
+        ) : (
+          <div key={owner.initials} className={`w-7 h-7 rounded-full ${owner.color} flex items-center justify-center text-[10px] font-semibold text-white -ml-1 first:ml-0 ring-2 ring-white dark:ring-background-dark`}>
+            {owner.initials}
+          </div>
+        )
+      )}
+    </div>
+  )
+}
+
 export default function FileExplorerList() {
   const [view, setView] = useState("list");
 
@@ -179,23 +214,7 @@ export default function FileExplorerList() {
                   {/* Name */}
                   <td className="px-6 py-3.5">
                     <div className="flex items-center gap-3">
-                      {file.type === "folder" ? (
-                        <span
-                          className={`material-symbols-outlined ${file.iconSize} ${file.iconColor} fill-current`}
-                        >
-                          {file.icon}
-                        </span>
-                      ) : (
-                        <div
-                          className={`w-9 h-9 rounded-lg ${file.iconBg} flex items-center justify-center flex-shrink-0`}
-                        >
-                          <span
-                            className={`material-symbols-outlined ${file.iconSize} ${file.iconColor}`}
-                          >
-                            {file.icon}
-                          </span>
-                        </div>
-                      )}
+                      <FileItemIcon file={file} />
                       <span className="text-sm font-medium text-slate-900 dark:text-white truncate">
                         {file.name}
                       </span>
@@ -204,25 +223,7 @@ export default function FileExplorerList() {
 
                   {/* Owner */}
                   <td className="px-4 py-3.5">
-                    <div className="flex items-center gap-1.5">
-                      {file.owners.map((owner, idx) =>
-                        owner.badge ? (
-                          <span
-                            key={idx}
-                            className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full"
-                          >
-                            {owner.badge}
-                          </span>
-                        ) : (
-                          <div
-                            key={idx}
-                            className={`w-7 h-7 rounded-full ${owner.color} flex items-center justify-center text-[10px] font-semibold text-white -ml-1 first:ml-0 ring-2 ring-white dark:ring-background-dark`}
-                          >
-                            {owner.initials}
-                          </div>
-                        )
-                      )}
-                    </div>
+                    <OwnerList owners={file.owners} />
                   </td>
 
                   {/* Last Modified */}

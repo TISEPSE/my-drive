@@ -96,7 +96,7 @@ def drive_contents():
     # Breadcrumbs
     current_folder = None
     if parent_id:
-        current_folder = File.query.get(parent_id)
+        current_folder = db.session.get(File, parent_id)
 
     breadcrumbs = build_breadcrumbs(current_folder)
 

@@ -22,7 +22,7 @@ STORAGE_CATEGORIES = [
 @storage_bp.route('/api/user/storage')
 @login_required
 def user_storage():
-    user = User.query.get(g.current_user_id)
+    user = db.session.get(User, g.current_user_id)
 
     # Calculate real storage from files
     all_files = File.query.filter_by(

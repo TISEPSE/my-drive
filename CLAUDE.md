@@ -4,17 +4,34 @@ Application web de gestion de fichiers cloud (type Google Drive). Frontend React
 
 ## Stack
 
-- **Frontend** : React + Vite + Tailwind CSS (port 5173 dev / port 80 Docker via Nginx)
+- **Frontend** : React + Vite + Tailwind CSS (port 5173 dev / port 8080 Docker via Nginx)
 - **Backend** : Flask + SQLAlchemy (port 5000)
 - **BDD** : PostgreSQL 16 (Docker)
 - **Uploads** : `/app/uploads/` (Docker volume)
-- **Auth** : pas encore — simulé avec `CURRENT_USER_ID = 'user-alex-001'`
+- **Auth** : JWT (access token 15 min + refresh token 7 jours), `login_required` decorator dans `src/auth.py`
+
+## Sécurité en place
+
+- JWT avec `login_required` sur toutes les routes protégées
+- Magic bytes validation via `python-magic` (MIME réel, pas le Content-Type navigateur)
+- `.svg` et `application/octet-stream` bloqués à l'upload
+- CORS restreint à `ALLOWED_ORIGINS` (env var)
+- Headers HTTP : X-Content-Type-Options, X-Frame-Options, X-XSS-Protection, HSTS, CSP, Referrer-Policy
+- Rate limiting : `flask-limiter` (200 req/min par défaut)
+- Quota utilisateur vérifié avant écriture sur disque
+- Logging structuré JSON (`JsonFormatter`)
+
+## Tests
+
+- **Backend** : pytest + pytest-flask, SQLite in-memory, 13 tests dans `backend/tests/`
+- **Frontend** : vitest + @testing-library/react, dans `client/src/tests/`
+- **Lancement automatique** : les tests s'exécutent à chaque `docker compose up` via `entrypoint.sh` — le serveur démarre seulement si tous les tests passent
 
 ## Convention API
 
 - Toutes les routes commencent par `/api/`
 - Réponses JSON, erreurs : `{ "error": "message" }` + code HTTP
-- Le frontend envoie les classes Tailwind pour les icônes/couleurs (`icon_color`, `icon_bg`)
+- `icon_color` et `icon_bg` sont calculés côté backend via `get_icon_for_mime()` dans `utils.py`
 - Tailles en octets bruts + format lisible (`size` + `formatted_size`)
 - Temps relatifs calculés côté backend (`format_relative_time`)
 
@@ -24,6 +41,7 @@ Application web de gestion de fichiers cloud (type Google Drive). Frontend React
 |--------|------------|
 | **User** | id (UUID), first_name, last_name, email, password_hash, bio, avatar_url, role, is_online, storage_used, storage_limit (20GB), two_factor_enabled |
 | **File** | id (UUID), name, is_folder, mime_type, size, icon/icon_color/icon_bg, parent_id (self-ref), owner_id, is_starred, is_locked, is_trashed, trashed_at, original_parent_id, storage_path |
+| **TokenBlocklist** | jti (JWT ID révoqué) |
 | **SharedFile** | file_id, shared_by_id, shared_with_id, permission (viewer/editor/owner) |
 | **ActivityLog** | user_id, file_id, action (string), details (JSON) |
 | **Comment** | file_id, user_id, text |
@@ -36,13 +54,21 @@ Application web de gestion de fichiers cloud (type Google Drive). Frontend React
 
 | Méthode | Route | Description |
 |---------|-------|-------------|
-| GET | `/api/drive/contents?parent_id=` | Liste fichiers/dossiers (retourne folders[], files[], breadcrumbs) |
+| POST | `/api/auth/register` | Inscription `{ first_name, last_name, email, password }` |
+| POST | `/api/auth/login` | Connexion → access_token + refresh_token |
+| POST | `/api/auth/refresh` | Renouveler l'access token via refresh token |
+| POST | `/api/auth/logout` | Révoquer le refresh token (TokenBlocklist) |
+| GET | `/api/drive/contents?parent_id=` | Liste fichiers/dossiers (folders[], files[], breadcrumbs) |
 | POST | `/api/drive/folders` | Créer un dossier `{ name, parent_id }` |
-| POST | `/api/files/upload` | Upload multipart (file + parent_id) |
+| POST | `/api/files/upload` | Upload multipart (file + parent_id), validation magic bytes |
 | GET | `/api/files/<id>/download?inline=true` | Télécharger/servir un fichier |
 | PUT | `/api/files/<id>/star` | Toggle favori |
 | PUT | `/api/files/<id>/rename` | Renommer `{ name }` |
 | DELETE | `/api/files/<id>` | Mettre à la corbeille (soft delete) |
+| GET | `/api/trash` | Liste des éléments en corbeille |
+| POST | `/api/trash/<id>/restore` | Restaurer un élément |
+| DELETE | `/api/trash/<id>` | Supprimer définitivement |
+| DELETE | `/api/trash` | Vider la corbeille |
 | GET | `/api/dashboard/stats` | Stats : total_files, storage, shared, trash |
 | GET | `/api/dashboard/activity?limit=` | Activité récente |
 | GET | `/api/dashboard/quick-access?limit=` | Fichiers récemment consultés |
@@ -54,7 +80,6 @@ Application web de gestion de fichiers cloud (type Google Drive). Frontend React
 
 | Route | Description |
 |-------|-------------|
-| POST/POST/POST | `/api/auth/register`, `login`, `logout` — JWT |
 | GET/PUT | `/api/user/profile` — Profil utilisateur |
 | POST | `/api/user/profile/avatar` — Upload avatar |
 | POST | `/api/user/password/change` |
@@ -70,27 +95,36 @@ Application web de gestion de fichiers cloud (type Google Drive). Frontend React
 | GET | `/api/files/recent` — Fichiers récents groupés par date |
 | GET | `/api/files/starred` — Favoris |
 | GET | `/api/activity/history` — Journal complet |
-| GET | `/api/trash` — Corbeille |
-| POST | `/api/trash/<id>/restore` — Restaurer |
-| DELETE | `/api/trash/<id>` — Supprimer définitivement |
-| DELETE | `/api/trash` — Vider la corbeille |
 | GET | `/api/search?q=&type=&scope=` — Recherche globale |
 | GET/PUT | `/api/notifications` — Notifications |
 
-## Mapping mime_type → icône
+## Mapping mime_type → icône (backend/src/utils.py)
 
-| Catégorie | Pattern | icon | icon_color |
-|-----------|---------|------|------------|
-| PDF | `application/pdf` | `picture_as_pdf` | `text-red-500` |
-| Word | `*wordprocessingml*` | `description` | `text-blue-500` |
-| Excel | `*spreadsheetml*` | `table_chart` | `text-green-500` |
-| PowerPoint | `*presentationml*` | `slideshow` | `text-orange-500` |
-| Image | `image/*` | `image` | `text-indigo-500` |
-| Video | `video/*` | `video_file` | `text-purple-500` |
-| Audio | `audio/*` | `audio_file` | `text-pink-500` |
-| Archive | `application/zip`, `x-rar`, `x-7z` | `folder_zip` | `text-gray-500` |
-| Code/JSON | `text/javascript`, `application/json` | `data_object` | `text-yellow-500` |
-| Autre | fallback | `draft` | `text-slate-500` |
+La fonction `get_icon_for_mime(mime_type, filename)` retourne `(icon, icon_color, icon_bg)`.
+Elle consulte d'abord `EXTENSION_ICON_MAP` (priorité), puis `MIME_ICON_MAP`, puis `DEFAULT_ICON`.
+
+| Catégorie | Couleur |
+|-----------|---------|
+| PDF | `text-red-500` / `bg-red-50` |
+| Word `.docx` | `text-blue-500` / `bg-blue-50` |
+| Excel `.xlsx` | `text-green-500` / `bg-green-50` |
+| PowerPoint `.pptx` | `text-orange-500` / `bg-orange-50` |
+| Image | `text-indigo-500` / `bg-indigo-50` |
+| Video | `text-purple-500` / `bg-purple-50` |
+| Audio | `text-pink-500` / `bg-pink-50` |
+| Archives `.zip/.rar/.7z/.tar/.gz` | `text-stone-600` / `bg-stone-200` |
+| JSON/XML/YAML | `text-yellow-500` / `bg-yellow-50` |
+| JS/TS | `text-yellow-400` ou `text-blue-400` |
+| JSX/TSX | `text-cyan-400` ou `text-cyan-500` |
+| HTML | `text-orange-400` / `bg-orange-50` |
+| CSS | `text-pink-400` / `bg-pink-50` |
+| SQL | `text-cyan-500` / `bg-cyan-50` |
+| Python `.py` | `text-yellow-500` / `bg-yellow-50` |
+| Figma `.fig` | `text-purple-500` / `bg-purple-50` |
+| Markdown `.md` | `text-slate-500` / `bg-slate-100` |
+| CSV | `text-green-500` / `bg-green-50` |
+| Epub | `text-teal-500` / `bg-teal-50` |
+| Fallback | `text-slate-500` / `bg-slate-200` |
 
 ## Actions ActivityLog
 
@@ -99,18 +133,29 @@ Application web de gestion de fichiers cloud (type Google Drive). Frontend React
 ## Structure backend
 
 ```
-backend/src/
-├── __init__.py          # create_app() factory
-├── models.py            # Tous les modèles SQLAlchemy
-├── extensions.py        # db, migrate instances
-├── utils.py             # get_icon_for_mime, format_file_size, format_relative_time
-├── seed.py              # Données de test (s'exécute si User table vide)
-└── routes/
-    ├── drive.py         # /api/drive/*
-    ├── files.py         # /api/files/*
-    ├── dashboard.py     # /api/dashboard/*
-    ├── storage.py       # /api/user/storage
-    └── settings.py      # /api/settings/*
+backend/
+├── entrypoint.sh        # Lance pytest puis démarre le serveur
+├── dockerfile
+├── requirements.txt
+├── tests/
+│   ├── conftest.py      # Fixtures pytest (app, db, client, test_user, auth_headers)
+│   ├── test_models.py   # Tests User + File (5 tests)
+│   └── test_upload.py   # Tests upload/download (8 tests)
+└── src/
+    ├── __init__.py      # create_app() — CORS, headers sécurité, limiter, blueprints, seed
+    ├── auth.py          # JWT helpers + login_required decorator
+    ├── models.py        # Tous les modèles SQLAlchemy
+    ├── extensions.py    # db, migrate, cors, limiter
+    ├── utils.py         # get_icon_for_mime, format_file_size, format_relative_time
+    ├── seed.py          # Données de test (s'exécute si User table vide)
+    └── routes/
+        ├── auth.py      # /api/auth/*
+        ├── drive.py     # /api/drive/*
+        ├── files.py     # /api/files/*
+        ├── trash.py     # /api/trash/*
+        ├── dashboard.py # /api/dashboard/*
+        ├── storage.py   # /api/user/storage
+        └── settings.py  # /api/settings/*
 ```
 
 ## Pages frontend (client/src/pages/)
@@ -120,4 +165,7 @@ Dashboard, MyDrive, SharedWithMe, Recent, Starred, Gallery, Trash, History, Sett
 ## Docker
 
 3 services : `db` (postgres:16), `api` (Flask), `client` (Nginx).
-Nginx proxie `/api/` vers `http://api:5000` (sans trailing slash sur proxy_pass).
+- Port exposé : **8080** (Nginx → port 80 interne)
+- Nginx proxie `/api/` vers `http://api:5000` (sans trailing slash sur proxy_pass)
+- Credentials via `.env` à la racine (voir `.env.example`)
+- Reset BDD : `docker compose down && docker volume rm my-drive_pgdata && docker compose up -d`

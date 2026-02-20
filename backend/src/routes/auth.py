@@ -98,7 +98,7 @@ def refresh():
     if TokenBlocklist.query.filter_by(jti=jti).first():
         return jsonify({'error': 'Token has been revoked'}), 401
 
-    user = User.query.get(payload['sub'])
+    user = db.session.get(User, payload['sub'])
     if not user:
         return jsonify({'error': 'User not found'}), 401
 

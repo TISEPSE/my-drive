@@ -7,3 +7,6 @@ python-dotenv
 werkzeug
 psycopg2-binary
 PyJWT
+python-magic
+pytest
+pytest-flask

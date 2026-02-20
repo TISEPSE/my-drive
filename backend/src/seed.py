@@ -2,6 +2,7 @@ from datetime import datetime, timezone, timedelta
 from werkzeug.security import generate_password_hash
 from src.extensions import db
 from src.models import User, File, ActivityLog, UserSettings
+from src.utils import get_icon_for_mime
 
 
 def seed_data():
@@ -69,26 +70,19 @@ def seed_data():
         folder_objs.append(f)
 
     files_data = [
-        ('Logo_V2.fig', 'application/x-figma', 2516582,
-         'image', 'text-indigo-500', 'bg-slate-50 dark:bg-[#151e26]'),
-        ('Q3_Report.pdf', 'application/pdf', 5033165,
-         'picture_as_pdf', 'text-red-500', 'bg-slate-50 dark:bg-[#151e26]'),
-        ('Budget_2024.xlsx', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet', 1258291,
-         'table_chart', 'text-green-500', 'bg-slate-50 dark:bg-[#151e26]'),
-        ('Project_Brief.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document', 870400,
-         'description', 'text-blue-500', 'bg-slate-50 dark:bg-[#151e26]'),
-        ('Q4_Strategy.pptx', 'application/vnd.openxmlformats-officedocument.presentationml.presentation', 13107200,
-         'slideshow', 'text-orange-400', 'bg-slate-50 dark:bg-[#151e26]'),
-        ('Demo_Recording.mp4', 'video/mp4', 134217728,
-         'movie', 'text-purple-500', 'bg-slate-50 dark:bg-[#151e26]'),
-        ('config.json', 'application/json', 4096,
-         'code', 'text-teal-400', 'bg-slate-50 dark:bg-[#151e26]'),
-        ('Archive_2023.zip', 'application/zip', 471859200,
-         'folder_zip', 'text-gray-400', 'bg-slate-50 dark:bg-[#151e26]'),
+        ('Logo_V2.fig',        'application/x-figma',                                                           2516582),
+        ('Q3_Report.pdf',      'application/pdf',                                                               5033165),
+        ('Budget_2024.xlsx',   'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',             1258291),
+        ('Project_Brief.docx', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',        870400),
+        ('Q4_Strategy.pptx',   'application/vnd.openxmlformats-officedocument.presentationml.presentation',   13107200),
+        ('Demo_Recording.mp4', 'video/mp4',                                                                  134217728),
+        ('config.json',        'application/json',                                                                4096),
+        ('Archive_2023.zip',   'application/zip',                                                            471859200),
     ]
 
     file_objs = []
-    for i, (name, mime, size, icon, color, bg) in enumerate(files_data):
+    for i, (name, mime, size) in enumerate(files_data):
+        icon, color, bg = get_icon_for_mime(mime, filename=name)
         f = File(
             name=name, is_folder=False, mime_type=mime, size=size,
             icon=icon, icon_color=color, icon_bg=bg,

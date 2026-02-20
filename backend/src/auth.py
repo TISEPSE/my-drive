@@ -3,6 +3,7 @@ import uuid
 from datetime import datetime, timezone, timedelta
 from functools import wraps
 from flask import request, jsonify, current_app, g
+from src.extensions import db
 from src.models import User, TokenBlocklist
 
 
@@ -59,7 +60,7 @@ def login_required(f):
         if payload.get('type') != 'access':
             return jsonify({'error': 'Invalid token type'}), 401
 
-        user = User.query.get(payload['sub'])
+        user = db.session.get(User, payload['sub'])
         if not user:
             return jsonify({'error': 'User not found'}), 401
 

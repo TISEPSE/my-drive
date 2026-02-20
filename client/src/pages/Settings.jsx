@@ -381,14 +381,14 @@ function AppearanceTab() {
         if (data.compact_mode !== undefined) setCompactMode(data.compact_mode);
         if (data.sidebar_position) setSidebarPos(data.sidebar_position);
       })
-      .catch(() => {});
+      .catch(err => console.error('Failed to load appearance settings:', err));
   }, []);
 
   const saveSettings = useCallback((updates) => {
     apiFetch('/api/settings/appearance', {
       method: 'PUT',
       body: JSON.stringify(updates),
-    }).catch(() => {});
+    }).catch(err => console.error('Failed to save appearance settings:', err));
   }, []);
 
   const handleTheme = (id) => {
@@ -670,7 +670,7 @@ function StorageTab() {
     apiFetch('/api/user/storage')
       .then(r => r.json())
       .then(data => setStorageData(data))
-      .catch(() => {});
+      .catch(err => console.error('Failed to load storage data:', err));
   }, []);
 
   const { formatted_used, formatted_limit, percentage, breakdown } = storageData;

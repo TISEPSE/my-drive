@@ -3,6 +3,81 @@ import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 import { apiFetch } from '../lib/api'
 
+function StatCard({ stat }) {
+  return (
+    <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className={`w-10 h-10 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
+          <span className={`material-symbols-outlined text-xl ${stat.iconColor}`}>{stat.icon}</span>
+        </div>
+      </div>
+      <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
+      <div className="flex items-center justify-between mt-1">
+        <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
+        <p className={`text-[11px] font-medium ${stat.changeColor}`}>{stat.change}</p>
+      </div>
+    </div>
+  )
+}
+
+function ActivityItem({ item, isLast }) {
+  return (
+    <div className={`flex items-center gap-3 py-3 ${!isLast ? 'border-b border-slate-100 dark:border-border-dark' : ''}`}>
+      <div className={`w-8 h-8 rounded-full ${item.color} flex items-center justify-center flex-shrink-0`}>
+        <span className="text-[10px] font-bold text-white">{item.initials}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
+          <span className="font-medium text-slate-900 dark:text-white">{item.user}</span>
+          {' '}{item.action}{' '}
+          <span className="font-medium text-primary">{item.target}</span>
+        </p>
+      </div>
+      <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">{item.time}</span>
+    </div>
+  )
+}
+
+function QuickAccessItem({ file, isLast }) {
+  return (
+    <div className={`flex items-center gap-3 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1f2d3d] -mx-2 px-2 rounded-lg transition-colors ${!isLast ? 'border-b border-slate-100 dark:border-border-dark' : ''}`}>
+      <div className={`w-9 h-9 rounded-lg ${file.iconBg} flex items-center justify-center flex-shrink-0`}>
+        <span className={`material-symbols-outlined text-lg ${file.iconColor}`}>{file.icon}</span>
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{file.name}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{file.subtitle}</p>
+      </div>
+      {file.badge && (
+        <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{file.badge}</span>
+      )}
+    </div>
+  )
+}
+
+function TeamMemberRow({ member, isLast }) {
+  return (
+    <div className={`flex items-center gap-3 py-2.5 ${!isLast ? 'border-b border-slate-100 dark:border-border-dark' : ''}`}>
+      <div className="relative flex-shrink-0">
+        <div className={`w-9 h-9 rounded-full ${member.color} flex items-center justify-center`}>
+          <span className="text-[11px] font-bold text-white">{member.initials}</span>
+        </div>
+        {member.online && (
+          <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-white dark:border-surface-dark"></div>
+        )}
+      </div>
+      <div className="flex-1 min-w-0">
+        <p className="text-sm font-medium text-slate-900 dark:text-white">{member.name}</p>
+        <p className="text-xs text-slate-500 dark:text-slate-400">{member.role}</p>
+      </div>
+      <div className="text-right">
+        <p className="text-sm font-medium text-slate-900 dark:text-white tabular-nums">{member.files}</p>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500">files</p>
+      </div>
+    </div>
+  )
+}
+
 export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState([
@@ -113,18 +188,7 @@ export default function Dashboard() {
       {/* Stats Cards */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         {stats.map((stat) => (
-          <div key={stat.label} className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4">
-            <div className="flex items-center justify-between mb-3">
-              <div className={`w-10 h-10 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
-                <span className={`material-symbols-outlined text-xl ${stat.iconColor}`}>{stat.icon}</span>
-              </div>
-            </div>
-            <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
-            <div className="flex items-center justify-between mt-1">
-              <p className="text-xs text-slate-500 dark:text-slate-400">{stat.label}</p>
-              <p className={`text-[11px] font-medium ${stat.changeColor}`}>{stat.change}</p>
-            </div>
-          </div>
+          <StatCard key={stat.label} stat={stat} />
         ))}
       </div>
 
@@ -181,29 +245,7 @@ export default function Dashboard() {
 
           <div className="space-y-0">
             {activityFeed.map((item, index) => (
-              <div
-                key={item.id}
-                className={`flex items-center gap-3 py-3 ${
-                  index < activityFeed.length - 1 ? 'border-b border-slate-100 dark:border-border-dark' : ''
-                }`}
-              >
-                {/* Avatar */}
-                <div className={`w-8 h-8 rounded-full ${item.color} flex items-center justify-center flex-shrink-0`}>
-                  <span className="text-[10px] font-bold text-white">{item.initials}</span>
-                </div>
-
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm text-slate-700 dark:text-slate-300 truncate">
-                    <span className="font-medium text-slate-900 dark:text-white">{item.user}</span>
-                    {' '}{item.action}{' '}
-                    <span className="font-medium text-primary">{item.target}</span>
-                  </p>
-                </div>
-
-                {/* Time */}
-                <span className="text-xs text-slate-400 dark:text-slate-500 flex-shrink-0">{item.time}</span>
-              </div>
+              <ActivityItem key={item.id} item={item} isLast={index === activityFeed.length - 1} />
             ))}
           </div>
         </div>
@@ -220,23 +262,7 @@ export default function Dashboard() {
 
           <div className="space-y-0">
             {quickAccessFiles.map((file, index) => (
-              <div
-                key={file.name}
-                className={`flex items-center gap-3 py-2.5 cursor-pointer hover:bg-slate-50 dark:hover:bg-[#1f2d3d] -mx-2 px-2 rounded-lg transition-colors ${
-                  index < quickAccessFiles.length - 1 ? 'border-b border-slate-100 dark:border-border-dark' : ''
-                }`}
-              >
-                <div className={`w-9 h-9 rounded-lg ${file.iconBg} flex items-center justify-center flex-shrink-0`}>
-                  <span className={`material-symbols-outlined text-lg ${file.iconColor}`}>{file.icon}</span>
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{file.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{file.subtitle}</p>
-                </div>
-                {file.badge && (
-                  <span className="text-xs font-medium text-primary bg-primary/10 px-2 py-0.5 rounded-full">{file.badge}</span>
-                )}
-              </div>
+              <QuickAccessItem key={file.name} file={file} isLast={index === quickAccessFiles.length - 1} />
             ))}
           </div>
         </div>
@@ -250,34 +276,7 @@ export default function Dashboard() {
 
           <div className="space-y-0">
             {teamMembers.map((member, index) => (
-              <div
-                key={member.name}
-                className={`flex items-center gap-3 py-2.5 ${
-                  index < teamMembers.length - 1 ? 'border-b border-slate-100 dark:border-border-dark' : ''
-                }`}
-              >
-                {/* Avatar with online indicator */}
-                <div className="relative flex-shrink-0">
-                  <div className={`w-9 h-9 rounded-full ${member.color} flex items-center justify-center`}>
-                    <span className="text-[11px] font-bold text-white">{member.initials}</span>
-                  </div>
-                  {member.online && (
-                    <div className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-green-500 border-2 border-white dark:border-surface-dark"></div>
-                  )}
-                </div>
-
-                {/* Info */}
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white">{member.name}</p>
-                  <p className="text-xs text-slate-500 dark:text-slate-400">{member.role}</p>
-                </div>
-
-                {/* Files count */}
-                <div className="text-right">
-                  <p className="text-sm font-medium text-slate-900 dark:text-white tabular-nums">{member.files}</p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500">files</p>
-                </div>
-              </div>
+              <TeamMemberRow key={member.name} member={member} isLast={index === teamMembers.length - 1} />
             ))}
           </div>
         </div>
