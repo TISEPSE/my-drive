@@ -10,7 +10,7 @@ storage_bp = Blueprint('storage', __name__)
 # MIME type categories for storage breakdown
 STORAGE_CATEGORIES = [
     ('Images', ['image/'], 'image'),
-    ('Videos', ['video/'], 'movie'),
+    ('Videos', ['video/'], 'play_circle'),
     ('Documents', ['application/pdf', 'application/msword',
                    'application/vnd.openxmlformats-officedocument.wordprocessingml',
                    'text/'], 'description'),
@@ -63,7 +63,7 @@ def user_storage():
         # Use seed-declared breakdown proportions
         seed_breakdown = [
             ('Images', 5798205850, 'image'),
-            ('Videos', 4402341478, 'movie'),
+            ('Videos', 4402341478, 'play_circle'),
             ('Documents', 3435973837, 'description'),
             ('Spreadsheets', 1610612736, 'table_chart'),
             ('Other', 1073741824, 'folder_zip'),

@@ -7,7 +7,7 @@ const fileTypeIcons = {
   'audio/': { icon: 'music_note', color: 'text-pink-400' },
   'application/pdf': { icon: 'picture_as_pdf', color: 'text-red-400' },
   'application/zip': { icon: 'folder_zip', color: 'text-gray-400' },
-  'text/plain': { icon: 'description', color: 'text-blue-400' },
+  'text/plain': { icon: 'article', color: 'text-slate-400' },
   'text/': { icon: 'data_object', color: 'text-yellow-400' },
 }
 
