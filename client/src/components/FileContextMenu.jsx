@@ -59,21 +59,30 @@ const fileActions = [
   { id: 'preview', label: 'Preview', icon: 'visibility', shortcut: 'Space' },
   { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
   { id: 'star', label: 'Add to Starred', icon: 'star' },
+  { id: 'details', label: 'Details', icon: 'info' },
   { type: 'divider' },
   { id: 'download', label: 'Download', icon: 'download', shortcut: 'Ctrl+D' },
   { type: 'divider' },
   { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
 ]
 
-const folderActions = [
-  { id: 'open', label: 'Open', icon: 'folder_open' },
-  { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
-  { id: 'star', label: 'Add to Starred', icon: 'star' },
-  { type: 'divider' },
-  { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
-]
+function getFolderActions(isLocked) {
+  return [
+    { id: 'open', label: 'Open', icon: 'folder_open' },
+    { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
+    { id: 'star', label: 'Add to Starred', icon: 'star' },
+    { type: 'divider' },
+    { id: 'lock', label: isLocked ? 'Unlock folder' : 'Lock folder', icon: isLocked ? 'lock_open' : 'lock' },
+    { id: 'move', label: 'Move to', icon: 'drive_file_move' },
+    { id: 'share', label: 'Share', icon: 'share' },
+    { id: 'details', label: 'Details', icon: 'info' },
+    { id: 'download', label: 'Download as ZIP', icon: 'folder_zip' },
+    { type: 'divider' },
+    { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
+  ]
+}
 
-function MenuDropdown({ anchorRect, onClose, onAction, isFolder }) {
+function MenuDropdown({ anchorRect, onClose, onAction, isFolder, isLocked }) {
   const menuRef = useRef(null)
   const [visible, setVisible] = useState(false)
   const position = useDropdownPosition(anchorRect, menuRef)
@@ -117,7 +126,7 @@ function MenuDropdown({ anchorRect, onClose, onAction, isFolder }) {
           }
         `}
       >
-        {(isFolder ? folderActions : fileActions).map((action, index) => {
+        {(isFolder ? getFolderActions(isLocked) : fileActions).map((action, index) => {
           if (action.type === 'divider') {
             return (
               <div
@@ -166,7 +175,7 @@ function MenuDropdown({ anchorRect, onClose, onAction, isFolder }) {
   )
 }
 
-export default function FileContextMenu({ children, className, onAction, isFolder }) {
+export default function FileContextMenu({ children, className, onAction, isFolder, isLocked }) {
   const [open, setOpen] = useState(false)
   const [anchorRect, setAnchorRect] = useState(null)
   const btnRef = useRef(null)
@@ -200,6 +209,7 @@ export default function FileContextMenu({ children, className, onAction, isFolde
           onClose={() => setOpen(false)}
           onAction={onAction}
           isFolder={isFolder}
+          isLocked={isLocked}
         />
       )}
     </>

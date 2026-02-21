@@ -267,3 +267,199 @@ def rename_file(file_id):
         'name': f.name,
         'updated_at': f.updated_at.isoformat() + 'Z' if f.updated_at else None,
     })
+
+
+def _is_descendant(potential_child_id, ancestor_id):
+    """Return True if potential_child_id is inside ancestor_id's subtree."""
+    item = db.session.get(File, potential_child_id)
+    while item and item.parent_id:
+        if item.parent_id == ancestor_id:
+            return True
+        item = db.session.get(File, item.parent_id)
+    return False
+
+
+@files_bp.route('/api/files/<file_id>/lock', methods=['PUT'])
+@login_required
+def toggle_lock(file_id):
+    from werkzeug.security import generate_password_hash, check_password_hash
+
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id, is_folder=True).first()
+    if not f:
+        return jsonify({'error': 'Folder not found'}), 404
+
+    data = request.get_json() or {}
+    password = data.get('password', '').strip()
+
+    if not f.is_locked:
+        if not password or len(password) < 4:
+            return jsonify({'error': 'Password must be at least 4 characters'}), 400
+        f.is_locked = True
+        f.lock_password_hash = generate_password_hash(password)
+        action = 'file_locked'
+    else:
+        if not password:
+            return jsonify({'error': 'Password is required'}), 400
+        if not f.lock_password_hash or not check_password_hash(f.lock_password_hash, password):
+            return jsonify({'error': 'Incorrect password'}), 403
+        f.is_locked = False
+        f.lock_password_hash = None
+        action = 'file_unlocked'
+
+    db.session.add(ActivityLog(user_id=g.current_user_id, file_id=f.id, action=action))
+    db.session.commit()
+    return jsonify({'id': f.id, 'is_locked': f.is_locked})
+
+
+@files_bp.route('/api/files/<file_id>/verify-lock', methods=['POST'])
+@login_required
+def verify_lock(file_id):
+    from werkzeug.security import check_password_hash
+
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id, is_folder=True).first()
+    if not f:
+        return jsonify({'error': 'Folder not found'}), 404
+
+    if not f.is_locked:
+        return jsonify({'verified': True})
+
+    data = request.get_json() or {}
+    password = data.get('password', '').strip()
+    if not password or not f.lock_password_hash:
+        return jsonify({'error': 'Password is required'}), 400
+
+    if not check_password_hash(f.lock_password_hash, password):
+        return jsonify({'verified': False, 'error': 'Incorrect password'}), 403
+
+    return jsonify({'verified': True})
+
+
+@files_bp.route('/api/files/<file_id>/move', methods=['POST'])
+@login_required
+def move_file(file_id):
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id).first()
+    if not f:
+        return jsonify({'error': 'File not found'}), 404
+
+    data = request.get_json() or {}
+    destination_id = data.get('destination_id') or None
+    if destination_id in ('null', '', 'undefined', 'None'):
+        destination_id = None
+
+    if destination_id:
+        dest = File.query.filter_by(id=destination_id, owner_id=g.current_user_id, is_folder=True).first()
+        if not dest:
+            return jsonify({'error': 'Destination folder not found'}), 404
+        if destination_id == file_id:
+            return jsonify({'error': 'Cannot move a folder into itself'}), 400
+        if f.is_folder and _is_descendant(destination_id, file_id):
+            return jsonify({'error': 'Cannot move a folder into one of its subfolders'}), 400
+
+    existing = File.query.filter(
+        File.owner_id == g.current_user_id,
+        File.parent_id == destination_id,
+        File.name == f.name,
+        File.id != f.id,
+        File.is_trashed == False,
+    ).first()
+    if existing:
+        return jsonify({'error': 'An item with this name already exists at the destination'}), 400
+
+    old_parent = f.parent_id
+    f.parent_id = destination_id
+    db.session.add(ActivityLog(
+        user_id=g.current_user_id, file_id=f.id, action='file_moved',
+        details={'from': old_parent, 'to': destination_id},
+    ))
+    db.session.commit()
+    return jsonify({'id': f.id, 'parent_id': f.parent_id})
+
+
+@files_bp.route('/api/files/<file_id>', methods=['GET'])
+@login_required
+def get_file_details(file_id):
+    import hashlib
+
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id).first()
+    if not f:
+        return jsonify({'error': 'File not found'}), 404
+
+    # Build path
+    path_parts = []
+    current = f.parent
+    while current:
+        path_parts.insert(0, current.name)
+        current = current.parent
+    path = '/My Drive' + ('/' + '/'.join(path_parts) if path_parts else '')
+
+    # Owner email
+    owner = db.session.get(User, f.owner_id)
+    owner_email = owner.email if owner else None
+
+    # SHA1 for files with content (skip if > 500 MB)
+    sha1 = None
+    has_content = bool(f.storage_path and os.path.exists(f.storage_path))
+    if has_content and f.size and f.size <= 500 * 1024 * 1024:
+        h = hashlib.sha1()
+        with open(f.storage_path, 'rb') as fp:
+            while chunk := fp.read(65536):
+                h.update(chunk)
+        sha1 = h.hexdigest()
+
+    items_count = None
+    if f.is_folder:
+        items_count = File.query.filter_by(parent_id=f.id, is_trashed=False).count()
+
+    return jsonify({
+        'id': f.id,
+        'name': f.name,
+        'is_folder': f.is_folder,
+        'mime_type': f.mime_type,
+        'size': f.size,
+        'formatted_size': format_file_size(f.size),
+        'icon': f.icon,
+        'icon_color': f.icon_color,
+        'icon_bg': f.icon_bg or ('bg-yellow-50 dark:bg-yellow-500/10' if f.is_folder else 'bg-slate-50 dark:bg-[#151e26]'),
+        'is_starred': f.is_starred,
+        'is_locked': f.is_locked,
+        'has_content': has_content,
+        'created_at': f.created_at.isoformat() + 'Z' if f.created_at else None,
+        'updated_at': f.updated_at.isoformat() + 'Z' if f.updated_at else None,
+        'parent_id': f.parent_id,
+        'owner_email': owner_email,
+        'sha1': sha1,
+        'path': path,
+        'items_count': items_count,
+    })
+
+
+def _add_folder_to_zip(zf, folder, prefix):
+    children = File.query.filter_by(parent_id=folder.id, is_trashed=False).all()
+    for child in children:
+        if child.is_folder:
+            _add_folder_to_zip(zf, child, f"{prefix}/{child.name}")
+        elif child.storage_path and os.path.exists(child.storage_path):
+            zf.write(child.storage_path, f"{prefix}/{child.name}")
+
+
+@files_bp.route('/api/files/<file_id>/download-zip')
+@login_required
+def download_folder_zip(file_id):
+    import io
+    import zipfile
+
+    folder = File.query.filter_by(id=file_id, owner_id=g.current_user_id, is_folder=True).first()
+    if not folder:
+        return jsonify({'error': 'Folder not found'}), 404
+
+    buf = io.BytesIO()
+    with zipfile.ZipFile(buf, 'w', zipfile.ZIP_DEFLATED) as zf:
+        _add_folder_to_zip(zf, folder, folder.name)
+    buf.seek(0)
+
+    return send_file(
+        buf,
+        mimetype='application/zip',
+        as_attachment=True,
+        download_name=f"{folder.name}.zip",
+    )

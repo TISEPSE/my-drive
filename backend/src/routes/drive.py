@@ -72,7 +72,11 @@ def drive_contents():
                 'items_count': items_count,
                 'icon': item.icon,
                 'icon_color': item.icon_color,
+                'icon_bg': item.icon_bg or 'bg-yellow-50 dark:bg-yellow-500/10',
                 'is_locked': item.is_locked,
+                'is_starred': item.is_starred,
+                'parent_id': item.parent_id,
+                'created_at': item.created_at.isoformat() + 'Z' if item.created_at else None,
                 'updated_at': item.updated_at.isoformat() + 'Z' if item.updated_at else None,
             })
         else:

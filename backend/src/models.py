@@ -47,6 +47,7 @@ class File(db.Model):
 
     is_starred = db.Column(db.Boolean, default=False)
     is_locked = db.Column(db.Boolean, default=False)
+    lock_password_hash = db.Column(db.String(256), nullable=True)
     is_trashed = db.Column(db.Boolean, default=False)
     trashed_at = db.Column(db.DateTime, nullable=True)
     original_parent_id = db.Column(db.String(36), nullable=True)

@@ -4,6 +4,57 @@ import FileContextMenu from '../components/FileContextMenu'
 import { useUpload } from '../contexts/UploadContext'
 import { apiFetch, getAccessToken } from '../lib/api'
 
+function VideoThumbnail({ src, className }) {
+  const ref = useRef(null)
+  return (
+    <video
+      ref={ref}
+      src={src}
+      preload="metadata"
+      muted
+      playsInline
+      onLoadedMetadata={() => { if (ref.current) ref.current.currentTime = 0.1 }}
+      className={className}
+    />
+  )
+}
+
+function JsonHighlight({ text }) {
+  let formatted
+  try {
+    formatted = JSON.stringify(JSON.parse(text), null, 2)
+  } catch {
+    return <pre className="text-sm text-slate-300 font-mono whitespace-pre-wrap break-words leading-relaxed">{text}</pre>
+  }
+
+  const e = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const parts = []
+  let lastIndex = 0
+  // Groups: 1=key-string 2=colon  3=string-value  4=bool  5=null  6=number
+  const re = /("(?:[^"\\]|\\.)*")(\s*:)|("(?:[^"\\]|\\.)*")|\b(true|false)\b|\b(null)\b|(-?\d+(?:\.\d+)?(?:[eE][+-]?\d+)?)/g
+  let m
+
+  while ((m = re.exec(formatted)) !== null) {
+    if (m.index > lastIndex) parts.push(e(formatted.slice(lastIndex, m.index)))
+    const [, key, colon, str, bool, nil, num] = m
+    if (key !== undefined)       parts.push(`<span style="color:#9cdcfe">${e(key)}</span>${colon}`)
+    else if (str !== undefined)  parts.push(`<span style="color:#ce9178">${e(str)}</span>`)
+    else if (bool !== undefined) parts.push(`<span style="color:#569cd6">${bool}</span>`)
+    else if (nil !== undefined)  parts.push(`<span style="color:#569cd6">${nil}</span>`)
+    else if (num !== undefined)  parts.push(`<span style="color:#b5cea8">${num}</span>`)
+    lastIndex = re.lastIndex
+  }
+  if (lastIndex < formatted.length) parts.push(e(formatted.slice(lastIndex)))
+
+  return (
+    <pre
+      className="text-sm font-mono whitespace-pre-wrap break-words leading-relaxed"
+      style={{ color: '#d4d4d4' }}
+      dangerouslySetInnerHTML={{ __html: parts.join('') }}
+    />
+  )
+}
+
 function FilePreviewModal({ file, onClose }) {
   const [textContent, setTextContent] = useState(null)
   const [textLoading, setTextLoading] = useState(false)
@@ -11,7 +62,7 @@ function FilePreviewModal({ file, onClose }) {
   useEffect(() => {
     if (!file) { setTextContent(null); return }
     const mime = file.mime_type || ''
-    const isText = file.has_content && (mime === 'text/plain' || mime === 'text/csv' || mime === 'text/markdown')
+    const isText = file.has_content && (mime === 'text/plain' || mime === 'text/csv' || mime === 'text/markdown' || mime === 'application/json')
     if (!isText) { setTextContent(null); return }
 
     setTextLoading(true)
@@ -34,7 +85,8 @@ function FilePreviewModal({ file, onClose }) {
   const isPdf = canServe && mime === 'application/pdf'
   const isVideo = canServe && mime.startsWith('video/')
   const isAudio = canServe && mime.startsWith('audio/')
-  const isText = canServe && (mime === 'text/plain' || mime === 'text/csv' || mime === 'text/markdown')
+  const isJson = canServe && mime === 'application/json'
+  const isText = canServe && (mime === 'text/plain' || mime === 'text/csv' || mime === 'text/markdown' || isJson)
   const canPreview = isImage || isPdf || isVideo || isAudio || isText
 
   return (
@@ -81,7 +133,7 @@ function FilePreviewModal({ file, onClose }) {
           <iframe src={inlineUrl} title={file.name} sandbox="allow-scripts allow-forms" className="w-[80vw] h-full rounded-lg bg-white" />
         )}
         {isVideo && (
-          <video src={inlineUrl} controls autoPlay className="max-w-full max-h-full rounded-lg" />
+          <video src={inlineUrl} controls className="max-w-full max-h-full rounded-lg" />
         )}
         {isAudio && (
           <div className="bg-[#1A2633] rounded-2xl p-10 flex flex-col items-center gap-5">
@@ -95,7 +147,9 @@ function FilePreviewModal({ file, onClose }) {
         {isText && (
           <div className="w-[80vw] h-[85vh] bg-[#1A2633] rounded-xl border border-[#283039] overflow-hidden flex flex-col">
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-[#283039] flex-shrink-0">
-              <span className="material-symbols-outlined text-sm text-blue-400">description</span>
+              <span className={`material-symbols-outlined text-sm ${isJson ? 'text-yellow-400' : 'text-blue-400'}`}>
+                {isJson ? 'data_object' : 'article'}
+              </span>
               <span className="text-xs text-slate-400 font-mono">{file.name}</span>
             </div>
             <div className="flex-1 overflow-y-auto p-4 min-h-0">
@@ -107,6 +161,8 @@ function FilePreviewModal({ file, onClose }) {
                   </svg>
                   Loading...
                 </div>
+              ) : isJson ? (
+                <JsonHighlight text={textContent} />
               ) : (
                 <pre className="text-sm text-slate-200 font-mono whitespace-pre-wrap break-words leading-relaxed">{textContent}</pre>
               )}
@@ -315,6 +371,374 @@ function RenameModal({ file, onClose, onConfirm }) {
   )
 }
 
+function LockFolderModal({ target, onClose, onConfirm, error }) {
+  const [password, setPassword] = useState('')
+  const [showPwd, setShowPwd] = useState(false)
+  const inputRef = useRef(null)
+
+  useEffect(() => {
+    if (target) { setPassword(''); setShowPwd(false); setTimeout(() => inputRef.current?.focus(), 50) }
+  }, [target])
+
+  if (!target) return null
+  const { folder, mode } = target
+  const isLocking = mode === 'lock'
+
+  const handleSubmit = (e) => {
+    e.preventDefault()
+    if (!password.trim() || (isLocking && password.length < 4)) return
+    onConfirm(password)
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="relative bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xl w-full max-w-md mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-border-dark">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${isLocking ? 'bg-amber-500/10' : 'bg-blue-500/10'}`}>
+              <span className={`material-symbols-outlined text-lg ${isLocking ? 'text-amber-500' : 'text-blue-400'}`} style={{ fontVariationSettings: "'FILL' 1" }}>
+                {isLocking ? 'lock' : 'lock_open'}
+              </span>
+            </div>
+            <div>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">
+                {isLocking ? 'Lock folder' : mode === 'open' ? 'Protected folder' : 'Unlock folder'}
+              </h3>
+              <p className="text-xs text-slate-500 truncate max-w-[220px]">{folder.name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+            <span className="material-symbols-outlined text-[20px] text-slate-400">close</span>
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-6">
+          <label className="block text-sm font-medium text-slate-700 dark:text-slate-300 mb-1.5">
+            {isLocking ? 'Set a password' : 'Enter password'}
+          </label>
+          {isLocking && (
+            <p className="text-xs text-slate-500 mb-3">This folder will require a password to open.</p>
+          )}
+          <div className="relative">
+            <input
+              ref={inputRef}
+              type={showPwd ? 'text' : 'password'}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder={isLocking ? 'Minimum 4 characters' : '••••••••'}
+              className="w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-xl px-4 py-3 pr-11 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-all"
+            />
+            <button type="button" onClick={() => setShowPwd(v => !v)} className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200">
+              <span className="material-symbols-outlined text-[20px]">{showPwd ? 'visibility_off' : 'visibility'}</span>
+            </button>
+          </div>
+          {error && (
+            <p className="mt-2.5 text-sm text-red-500 flex items-center gap-1.5">
+              <span className="material-symbols-outlined text-[16px]">error</span>{error}
+            </p>
+          )}
+          <div className="flex justify-end gap-3 mt-6">
+            <button type="button" onClick={onClose} className="px-4 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">
+              Cancel
+            </button>
+            <button
+              type="submit"
+              disabled={!password.trim() || (isLocking && password.length < 4)}
+              className={`px-5 py-2.5 text-sm font-semibold text-white rounded-xl transition-colors disabled:opacity-40 disabled:cursor-not-allowed ${isLocking ? 'bg-amber-500 hover:bg-amber-600' : 'bg-primary hover:bg-blue-600'}`}
+            >
+              {isLocking ? 'Lock' : mode === 'open' ? 'Open' : 'Unlock'}
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  )
+}
+
+function getMimeTypeLabel(mime) {
+  if (!mime) return '—'
+  const map = {
+    'image/jpeg': 'JPEG Image', 'image/png': 'PNG Image', 'image/gif': 'GIF Image',
+    'image/webp': 'WebP Image', 'image/bmp': 'BMP Image', 'image/svg+xml': 'SVG Image',
+    'video/mp4': 'MP4 Video', 'video/quicktime': 'QuickTime Video', 'video/x-msvideo': 'AVI Video',
+    'video/x-matroska': 'MKV Video', 'video/webm': 'WebM Video',
+    'audio/mpeg': 'MP3 Audio', 'audio/wav': 'WAV Audio', 'audio/ogg': 'OGG Audio',
+    'audio/flac': 'FLAC Audio', 'audio/aac': 'AAC Audio',
+    'application/pdf': 'PDF Document', 'application/json': 'JSON File',
+    'application/zip': 'ZIP Archive', 'application/x-rar-compressed': 'RAR Archive',
+    'application/x-7z-compressed': '7-Zip Archive',
+    'text/plain': 'Text File', 'text/csv': 'CSV Spreadsheet', 'text/markdown': 'Markdown Document',
+    'application/msword': 'Word Document',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'Word Document',
+    'application/vnd.ms-excel': 'Excel Spreadsheet',
+    'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': 'Excel Spreadsheet',
+    'application/vnd.ms-powerpoint': 'PowerPoint Presentation',
+    'application/vnd.openxmlformats-officedocument.presentationml.presentation': 'PowerPoint Presentation',
+  }
+  if (map[mime]) return map[mime]
+  const [type, sub] = mime.split('/')
+  if (type === 'image') return `${sub.toUpperCase()} Image`
+  if (type === 'video') return `${sub.toUpperCase()} Video`
+  if (type === 'audio') return `${sub.toUpperCase()} Audio`
+  if (type === 'text') return `${sub} Text`
+  return mime
+}
+
+function ItemDetailsModal({ itemId, onClose }) {
+  const [data, setData] = useState(null)
+  const [loading, setLoading] = useState(true)
+  const [showAdvanced, setShowAdvanced] = useState(false)
+
+  useEffect(() => {
+    if (!itemId) return
+    setLoading(true); setData(null); setShowAdvanced(false)
+    apiFetch(`/api/files/${itemId}`)
+      .then(r => r.json())
+      .then(d => setData(d))
+      .finally(() => setLoading(false))
+  }, [itemId])
+
+  if (!itemId) return null
+
+  const fmt = (iso) => iso
+    ? new Date(iso).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })
+    : '—'
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="relative bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xl w-full max-w-lg mx-4 max-h-[90vh] flex flex-col" onClick={(e) => e.stopPropagation()}>
+
+        {/* Header */}
+        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 dark:border-border-dark flex-shrink-0">
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">File information</h3>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+            <span className="material-symbols-outlined text-[20px] text-slate-400">close</span>
+          </button>
+        </div>
+
+        {/* Scrollable body */}
+        <div className="flex-1 overflow-y-auto min-h-0">
+          {loading ? (
+            <div className="flex items-center justify-center py-16 gap-2 text-slate-400 text-sm">
+              <svg className="w-5 h-5 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>Loading…
+            </div>
+          ) : data ? (
+            <>
+              {/* Verified banner */}
+              {data.sha1 && (
+                <div className="mx-5 mt-5 px-4 py-3 rounded-xl bg-green-50 dark:bg-green-500/10 border border-green-200/60 dark:border-green-500/20 flex items-start gap-3">
+                  <span className="material-symbols-outlined text-green-500 text-xl flex-shrink-0 mt-0.5" style={{ fontVariationSettings: "'FILL' 1" }}>verified_user</span>
+                  <div>
+                    <p className="text-xs font-semibold text-green-700 dark:text-green-400">Digital signature verified.</p>
+                    <p className="text-xs text-green-600/80 dark:text-green-500/80 mt-0.5">This file was securely imported by {data.owner_email}.</p>
+                  </div>
+                </div>
+              )}
+
+              {/* File icon + name */}
+              <div className="px-6 pt-5 pb-4 flex items-center gap-4 border-b border-slate-100 dark:border-border-dark">
+                <div className={`w-12 h-12 rounded-xl ${data.icon_bg} flex items-center justify-center flex-shrink-0`}>
+                  <span className={`material-symbols-outlined text-2xl ${data.icon_color}`} style={data.is_folder ? { fontVariationSettings: "'FILL' 1" } : {}}>{data.icon}</span>
+                </div>
+                <div className="min-w-0">
+                  <p className="font-semibold text-slate-900 dark:text-white truncate">{data.name}</p>
+                  <p className="text-xs text-slate-500 mt-0.5">{data.is_folder ? `${data.items_count} items` : data.formatted_size}</p>
+                </div>
+              </div>
+
+              {/* Info rows */}
+              <div className="px-6 py-2">
+                {[
+                  { label: 'Name', value: data.name },
+                  { label: 'Location', value: data.path },
+                  { label: 'Owner', value: data.owner_email || '—' },
+                  { label: 'Created', value: fmt(data.created_at) },
+                  { label: 'Modified', value: fmt(data.updated_at) },
+                  ...(!data.is_folder && data.mime_type ? [
+                    { label: 'Type', value: getMimeTypeLabel(data.mime_type) },
+                    { label: 'Media type', value: data.mime_type, mono: true },
+                    { label: 'Size', value: data.formatted_size },
+                  ] : []),
+                  { label: 'Shared', value: 'No' },
+                ].map(({ label, value, mono }) => (
+                  <div key={label} className="flex items-start py-2.5 gap-4 border-b border-slate-100 dark:border-border-dark last:border-0">
+                    <span className="w-24 text-xs font-medium text-slate-500 dark:text-slate-400 flex-shrink-0 pt-px">{label}</span>
+                    <span className={`flex-1 break-all ${mono ? 'text-xs font-mono text-slate-600 dark:text-slate-300' : 'text-sm text-slate-800 dark:text-slate-200'}`}>{value}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Advanced details */}
+              <div className="px-6 pb-4">
+                <button onClick={() => setShowAdvanced(v => !v)} className="flex items-center gap-1 text-sm font-semibold text-primary py-2 hover:opacity-80 transition-opacity">
+                  <span className="material-symbols-outlined text-[18px]">{showAdvanced ? 'expand_less' : 'expand_more'}</span>
+                  Advanced details
+                </button>
+                {showAdvanced && (
+                  <div>
+                    {[
+                      !data.is_folder && { label: 'Size (bytes)', value: data.size?.toLocaleString() },
+                      data.sha1 && { label: 'SHA1', value: data.sha1 },
+                      { label: 'File ID', value: data.id },
+                    ].filter(Boolean).map(({ label, value }) => (
+                      <div key={label} className="flex items-start py-2.5 gap-4 border-b border-slate-100 dark:border-border-dark last:border-0">
+                        <span className="w-24 text-xs font-medium text-slate-500 dark:text-slate-400 flex-shrink-0 pt-px">{label}</span>
+                        <span className="flex-1 text-xs font-mono text-slate-600 dark:text-slate-300 break-all">{value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </>
+          ) : (
+            <p className="py-16 text-center text-slate-400 text-sm">Failed to load file information.</p>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-6 py-4 border-t border-slate-100 dark:border-border-dark flex-shrink-0">
+          <button onClick={onClose} className="w-full py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">
+            Close
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
+function MoveFolderModal({ item, onClose, onMoved }) {
+  const [browseId, setBrowseId] = useState(null)
+  const [breadcrumbs, setBreadcrumbs] = useState([{ id: null, name: 'My Drive' }])
+  const [folders, setFolders] = useState([])
+  const [loading, setLoading] = useState(true)
+  const [moving, setMoving] = useState(false)
+  const [error, setError] = useState(null)
+
+  useEffect(() => {
+    if (!item) return
+    setLoading(true)
+    setError(null)
+    const url = browseId ? `/api/drive/contents?parent_id=${browseId}` : '/api/drive/contents'
+    apiFetch(url)
+      .then(r => r.json())
+      .then(data => {
+        setFolders((data.folders || []).filter(f => f.id !== item.id))
+        setBreadcrumbs(data.breadcrumbs || [{ id: null, name: 'My Drive' }])
+      })
+      .catch(() => setError('Failed to load'))
+      .finally(() => setLoading(false))
+  }, [browseId, item])
+
+  const handleMove = async () => {
+    setMoving(true)
+    setError(null)
+    try {
+      const res = await apiFetch(`/api/files/${item.id}/move`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ destination_id: browseId }),
+      })
+      if (res.ok) { onMoved() }
+      else { const d = await res.json(); setError(d.error || 'Move failed') }
+    } catch { setError('An error occurred') }
+    setMoving(false)
+  }
+
+  if (!item) return null
+  const alreadyHere = (item.parent_id ?? null) === (browseId ?? null)
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={onClose}>
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+      <div className="relative bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xl w-full max-w-sm mx-4 overflow-hidden" onClick={(e) => e.stopPropagation()}>
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-slate-100 dark:border-border-dark">
+          <div className="flex items-center gap-3">
+            <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center">
+              <span className="material-symbols-outlined text-lg text-primary">drive_file_move</span>
+            </div>
+            <div>
+              <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Move</h3>
+              <p className="text-xs text-slate-500 truncate max-w-[160px]">{item.name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="p-1.5 rounded-lg hover:bg-slate-100 dark:hover:bg-border-dark transition-colors">
+            <span className="material-symbols-outlined text-[20px] text-slate-400">close</span>
+          </button>
+        </div>
+
+        {/* Breadcrumb nav */}
+        <div className="px-4 py-2 border-b border-slate-100 dark:border-border-dark bg-slate-50 dark:bg-background-dark flex items-center gap-0.5 flex-wrap min-h-[36px]">
+          {breadcrumbs.map((crumb, i) => (
+            <span key={crumb.id ?? 'root'} className="flex items-center">
+              {i > 0 && <span className="material-symbols-outlined text-[16px] text-slate-400">chevron_right</span>}
+              <button
+                onClick={() => setBrowseId(crumb.id)}
+                className={`text-xs px-1.5 py-0.5 rounded transition-colors hover:bg-slate-200 dark:hover:bg-border-dark ${i === breadcrumbs.length - 1 ? 'text-slate-800 dark:text-slate-200 font-semibold' : 'text-slate-500 dark:text-slate-400'}`}
+              >
+                {crumb.id === null
+                  ? <span className="flex items-center gap-0.5"><span className="material-symbols-outlined text-[14px]">cloud</span>My Drive</span>
+                  : crumb.name}
+              </button>
+            </span>
+          ))}
+        </div>
+
+        {/* Folder list */}
+        <div className="h-48 overflow-y-auto">
+          {loading ? (
+            <div className="flex items-center justify-center h-full gap-2 text-slate-400 text-sm">
+              <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
+                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+              </svg>Loading...
+            </div>
+          ) : folders.length === 0 ? (
+            <div className="flex flex-col items-center justify-center h-full text-slate-400 gap-2">
+              <span className="material-symbols-outlined text-3xl">folder_open</span>
+              <p className="text-sm">No subfolders</p>
+            </div>
+          ) : (
+            <div className="p-2">
+              {folders.map(f => (
+                <button key={f.id} onClick={() => setBrowseId(f.id)} className="w-full flex items-center gap-2.5 px-3 py-2.5 rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark text-left transition-colors group">
+                  <span className={`material-symbols-outlined text-xl ${f.icon_color}`} style={{ fontVariationSettings: "'FILL' 1" }}>{f.icon}</span>
+                  <span className="flex-1 text-sm font-medium text-slate-800 dark:text-slate-200 truncate">{f.name}</span>
+                  {f.is_locked && <span className="material-symbols-outlined text-[14px] text-slate-400">lock</span>}
+                  <span className="material-symbols-outlined text-[16px] text-slate-400 opacity-0 group-hover:opacity-100">chevron_right</span>
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-slate-100 dark:border-border-dark">
+          {error && <p className="text-xs text-red-500 mb-3 flex items-center gap-1"><span className="material-symbols-outlined text-[14px]">error</span>{error}</p>}
+          <div className="flex items-center justify-between gap-3">
+            <p className="text-xs text-slate-500 truncate">
+              To: <span className="font-medium text-slate-700 dark:text-slate-300">
+                {breadcrumbs[breadcrumbs.length - 1]?.id === null ? 'My Drive' : breadcrumbs[breadcrumbs.length - 1]?.name}
+              </span>
+            </p>
+            <div className="flex gap-2 flex-shrink-0">
+              <button onClick={onClose} className="px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">Cancel</button>
+              <button onClick={handleMove} disabled={alreadyHere || moving} className="px-4 py-2 text-sm font-semibold text-white bg-primary rounded-xl hover:bg-blue-600 transition-colors disabled:opacity-40 disabled:cursor-not-allowed">
+                {moving ? 'Moving…' : 'Move here'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function DriveLoadingSkeleton() {
   return (
     <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-pulse">
@@ -421,6 +845,7 @@ function FolderCard({ folder, onOpen, onAction }) {
       </div>
       <FileContextMenu
         isFolder
+        isLocked={folder.is_locked}
         onAction={(id) => onAction(id, folder)}
         className="w-7 h-7 flex items-center justify-center rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-border-dark opacity-0 group-hover:opacity-100 transition-all flex-shrink-0"
       />
@@ -430,14 +855,28 @@ function FolderCard({ folder, onOpen, onAction }) {
 
 function FileCard({ file, onPreview, onAction }) {
   const token = getAccessToken()
+  const isImage = file.has_content && file.mime_type?.startsWith('image/')
+  const isVideo = file.has_content && file.mime_type?.startsWith('video/')
   return (
     <div
       onClick={() => onPreview(file)}
       className="group relative bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg p-2 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all cursor-pointer"
     >
-      <div className={`aspect-[4/3] ${file.icon_bg} rounded-md mb-2 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-border-dark`}>
-        {file.has_content && file.mime_type?.startsWith('image/') ? (
+      <div className={`aspect-[4/3] ${file.icon_bg} rounded-md mb-2 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-border-dark relative`}>
+        {isImage ? (
           <img src={`/api/files/${file.id}/download?inline=true&token=${token}`} alt={file.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+        ) : isVideo ? (
+          <>
+            <VideoThumbnail
+              src={`/api/files/${file.id}/download?inline=true&token=${token}`}
+              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            />
+            <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-colors">
+              <div className="w-8 h-8 rounded-full bg-black/55 flex items-center justify-center backdrop-blur-sm">
+                <span className="material-symbols-outlined text-[18px] text-white" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
+              </div>
+            </div>
+          </>
         ) : (
           <span className={`material-symbols-outlined text-3xl ${file.icon_color} opacity-80 group-hover:scale-110 transition-transform duration-300`}>{file.icon}</span>
         )}
@@ -558,6 +997,7 @@ function DriveListSection({ folders, files, onFolderOpen, onFilePreview, onFileA
               <td className="px-5 py-3 text-right">
                 <FileContextMenu
                   isFolder
+                  isLocked={folder.is_locked}
                   onAction={(id) => onFolderAction(id, folder)}
                   className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-border-dark rounded-full transition-colors opacity-0 group-hover:opacity-100"
                 />
@@ -602,6 +1042,11 @@ export default function MyDrive() {
   const [previewFile, setPreviewFile] = useState(null)
   const [trashTarget, setTrashTarget] = useState(null)
   const [renameTarget, setRenameTarget] = useState(null)
+  const [lockTarget, setLockTarget] = useState(null)   // { folder, mode: 'lock'|'unlock'|'open' }
+  const [lockError, setLockError] = useState(null)
+  const [unlockedFolders] = useState(() => new Set())
+  const [detailsItemId, setDetailsItemId] = useState(null)
+  const [moveTarget, setMoveTarget] = useState(null)
   const dragCounterRef = useRef(0)
   const dropZoneRef = useRef(null)
   const fileInputRef = useRef(null)
@@ -699,8 +1144,13 @@ export default function MyDrive() {
   }
 
   const handleFolderClick = useCallback((folder) => {
-    navigate(`/drive/folder/${folder.id}`)
-  }, [navigate])
+    if (folder.is_locked && !unlockedFolders.has(folder.id)) {
+      setLockError(null)
+      setLockTarget({ folder, mode: 'open' })
+    } else {
+      navigate(`/drive/folder/${folder.id}`)
+    }
+  }, [navigate, unlockedFolders])
 
   const handleFileInputChange = useCallback((e) => {
     const files = Array.from(e.target.files)
@@ -733,6 +1183,7 @@ export default function MyDrive() {
       case 'preview': setPreviewFile(file); break
       case 'rename': setRenameTarget(file); break
       case 'star': toggleStar(file); break
+      case 'details': setDetailsItemId(file.id); break
       case 'trash': setTrashTarget(file); break
       case 'download':
         window.open(`/api/files/${file.id}/download?token=${getAccessToken()}`, '_blank')
@@ -742,12 +1193,61 @@ export default function MyDrive() {
 
   const handleFolderAction = useCallback((actionId, folder) => {
     switch (actionId) {
-      case 'open': navigate(`/drive/folder/${folder.id}`); break
+      case 'open':
+        if (folder.is_locked && !unlockedFolders.has(folder.id)) {
+          setLockError(null); setLockTarget({ folder, mode: 'open' })
+        } else { navigate(`/drive/folder/${folder.id}`) }
+        break
       case 'rename': setRenameTarget(folder); break
       case 'star': toggleStar(folder); break
+      case 'lock':
+        setLockError(null)
+        setLockTarget({ folder, mode: folder.is_locked ? 'unlock' : 'lock' })
+        break
+      case 'details': setDetailsItemId(folder.id); break
+      case 'download':
+        window.open(`/api/files/${folder.id}/download-zip?token=${getAccessToken()}`, '_blank')
+        break
+      case 'move': setMoveTarget(folder); break
       case 'trash': setTrashTarget(folder); break
     }
-  }, [navigate, toggleStar])
+  }, [navigate, toggleStar, unlockedFolders])
+
+  const handleLockConfirm = useCallback(async (password) => {
+    if (!lockTarget) return
+    const { folder, mode } = lockTarget
+    try {
+      if (mode === 'open') {
+        const res = await apiFetch(`/api/files/${folder.id}/verify-lock`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        })
+        if (res.ok) {
+          unlockedFolders.add(folder.id)
+          setLockTarget(null); setLockError(null)
+          navigate(`/drive/folder/${folder.id}`)
+        } else {
+          const d = await res.json()
+          setLockError(d.error || 'Incorrect password')
+        }
+      } else {
+        const res = await apiFetch(`/api/files/${folder.id}/lock`, {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ password }),
+        })
+        if (res.ok) {
+          if (mode === 'unlock') unlockedFolders.delete(folder.id)
+          setLockTarget(null); setLockError(null)
+          fetchContents()
+        } else {
+          const d = await res.json()
+          setLockError(d.error || 'Incorrect password')
+        }
+      }
+    } catch { setLockError('An error occurred') }
+  }, [lockTarget, navigate, fetchContents, unlockedFolders])
 
   const confirmTrash = useCallback(async () => {
     if (!trashTarget) return
@@ -844,6 +1344,27 @@ export default function MyDrive() {
         file={renameTarget}
         onClose={() => setRenameTarget(null)}
         onConfirm={confirmRename}
+      />
+
+      {/* Lock / Unlock / Open Modal */}
+      <LockFolderModal
+        target={lockTarget}
+        error={lockError}
+        onClose={() => { setLockTarget(null); setLockError(null) }}
+        onConfirm={handleLockConfirm}
+      />
+
+      {/* Item Details Modal */}
+      <ItemDetailsModal
+        itemId={detailsItemId}
+        onClose={() => setDetailsItemId(null)}
+      />
+
+      {/* Move Modal */}
+      <MoveFolderModal
+        item={moveTarget}
+        onClose={() => setMoveTarget(null)}
+        onMoved={() => { setMoveTarget(null); fetchContents() }}
       />
     </div>
   )
