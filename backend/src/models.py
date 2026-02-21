@@ -95,6 +95,21 @@ class TokenBlocklist(db.Model):
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
 
 
+class SharedFile(db.Model):
+    __tablename__ = 'shared_file'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    file_id = db.Column(db.String(36), db.ForeignKey('file.id'), nullable=False)
+    shared_by_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    shared_with_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    permission = db.Column(db.String(10), default='viewer')  # viewer, editor
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    file = db.relationship('File', backref='shares', foreign_keys=[file_id])
+    shared_by = db.relationship('User', foreign_keys=[shared_by_id])
+    shared_with = db.relationship('User', foreign_keys=[shared_with_id])
+
+
 class ActivityLog(db.Model):
     __tablename__ = 'activity_log'
 

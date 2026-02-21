@@ -134,20 +134,21 @@ def dashboard_quick_access():
     seen_files = set()
     result = []
 
+    action_labels = {
+        'file_edited': 'Edited',
+        'file_viewed': 'Opened',
+        'file_uploaded': 'Uploaded',
+    }
+
     for act in activities:
         if act.file_id in seen_files:
             continue
         seen_files.add(act.file_id)
 
         file_obj = db.session.get(File, act.file_id)
-        if not file_obj or file_obj.is_trashed:
+        if not file_obj or file_obj.is_trashed or file_obj.is_folder:
             continue
 
-        action_labels = {
-            'file_edited': 'Edited',
-            'file_viewed': 'Opened',
-            'file_uploaded': 'Uploaded',
-        }
         label = action_labels.get(act.action, 'Accessed')
         subtitle = f"{label} {format_relative_time(act.created_at)}"
 
@@ -159,10 +160,44 @@ def dashboard_quick_access():
             'icon_bg': file_obj.icon_bg or 'bg-slate-500/10',
             'subtitle': subtitle,
             'is_owner': file_obj.owner_id == g.current_user_id,
+            'parent_id': file_obj.parent_id,
+            'mime_type': file_obj.mime_type,
+            'has_content': bool(file_obj.storage_path),
+            'size': file_obj.size,
+            'formatted_size': format_file_size(file_obj.size),
+            'is_folder': False,
         })
 
         if len(result) >= limit:
             break
+
+    # Fall back: fill remaining slots with recently uploaded files (no activity log needed)
+    if len(result) < limit:
+        recent_files = File.query.filter(
+            File.owner_id == g.current_user_id,
+            File.is_trashed == False,
+            File.is_folder == False,
+            File.id.notin_(seen_files),
+        ).order_by(File.created_at.desc()).limit(limit - len(result)).all()
+
+        for file_obj in recent_files:
+            seen_files.add(file_obj.id)
+            subtitle = f"Uploaded {format_relative_time(file_obj.created_at)}"
+            result.append({
+                'id': file_obj.id,
+                'name': file_obj.name,
+                'icon': file_obj.icon,
+                'icon_color': file_obj.icon_color,
+                'icon_bg': file_obj.icon_bg or 'bg-slate-500/10',
+                'subtitle': subtitle,
+                'is_owner': True,
+                'parent_id': file_obj.parent_id,
+                'mime_type': file_obj.mime_type,
+                'has_content': bool(file_obj.storage_path),
+                'size': file_obj.size,
+                'formatted_size': format_file_size(file_obj.size),
+                'is_folder': False,
+            })
 
     return jsonify({'files': result})
 

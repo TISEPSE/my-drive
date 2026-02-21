@@ -5,7 +5,7 @@ import magic
 from flask import Blueprint, request, jsonify, current_app, send_file, g
 from werkzeug.utils import secure_filename
 from src.extensions import db
-from src.models import File, User, ActivityLog
+from src.models import File, User, ActivityLog, SharedFile
 from src.utils import get_icon_for_mime, format_file_size
 from src.auth import login_required
 
@@ -109,6 +109,7 @@ def upload_file():
         storage_path=save_path,
     )
     db.session.add(new_file)
+    db.session.flush()  # ensure new_file.id is set before creating the activity log
 
     # Update user storage usage
     if user:
@@ -431,6 +432,84 @@ def get_file_details(file_id):
         'path': path,
         'items_count': items_count,
     })
+
+
+@files_bp.route('/api/files/<file_id>/shares', methods=['GET'])
+@login_required
+def get_file_shares(file_id):
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id).first()
+    if not f:
+        return jsonify({'error': 'File not found'}), 404
+
+    shares = SharedFile.query.filter_by(file_id=file_id).all()
+    return jsonify({'shares': [{
+        'id': s.id,
+        'email': s.shared_with.email,
+        'name': f"{s.shared_with.first_name} {s.shared_with.last_name}",
+        'permission': s.permission,
+    } for s in shares]})
+
+
+@files_bp.route('/api/files/<file_id>/share', methods=['POST'])
+@login_required
+def share_file(file_id):
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id).first()
+    if not f:
+        return jsonify({'error': 'File not found'}), 404
+
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    permission = data.get('permission', 'viewer')
+
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+    if permission not in ('viewer', 'editor'):
+        return jsonify({'error': 'Invalid permission'}), 400
+
+    target_user = User.query.filter_by(email=email).first()
+    if not target_user:
+        return jsonify({'error': 'No account found with this email address'}), 404
+    if target_user.id == g.current_user_id:
+        return jsonify({'error': 'You cannot share a file with yourself'}), 400
+
+    existing = SharedFile.query.filter_by(file_id=file_id, shared_with_id=target_user.id).first()
+    if existing:
+        existing.permission = permission
+    else:
+        db.session.add(SharedFile(
+            file_id=file_id,
+            shared_by_id=g.current_user_id,
+            shared_with_id=target_user.id,
+            permission=permission,
+        ))
+        db.session.add(ActivityLog(
+            user_id=g.current_user_id, file_id=file_id, action='file_shared',
+            details={'with': email, 'permission': permission},
+        ))
+    db.session.commit()
+
+    return jsonify({
+        'id': existing.id if existing else None,
+        'email': target_user.email,
+        'name': f"{target_user.first_name} {target_user.last_name}",
+        'permission': permission,
+    })
+
+
+@files_bp.route('/api/files/<file_id>/shares/<share_id>', methods=['DELETE'])
+@login_required
+def unshare_file(file_id, share_id):
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id).first()
+    if not f:
+        return jsonify({'error': 'File not found'}), 404
+
+    share = SharedFile.query.filter_by(id=share_id, file_id=file_id).first()
+    if not share:
+        return jsonify({'error': 'Share not found'}), 404
+
+    db.session.delete(share)
+    db.session.commit()
+    return jsonify({'deleted': True})
 
 
 def _add_folder_to_zip(zf, folder, prefix):

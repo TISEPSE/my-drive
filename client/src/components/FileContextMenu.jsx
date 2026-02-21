@@ -61,6 +61,8 @@ const fileActions = [
   { id: 'star', label: 'Add to Starred', icon: 'star' },
   { id: 'details', label: 'Details', icon: 'info' },
   { type: 'divider' },
+  { id: 'move', label: 'Move to', icon: 'drive_file_move' },
+  { id: 'share', label: 'Share', icon: 'share' },
   { id: 'download', label: 'Download', icon: 'download', shortcut: 'Ctrl+D' },
   { type: 'divider' },
   { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },

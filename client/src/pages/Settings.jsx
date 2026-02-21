@@ -1,5 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { apiFetch } from "../lib/api";
+import { useTheme } from "../contexts/ThemeContext";
 
 const tabs = [
   { id: "profile", label: "Profile", icon: "person" },
@@ -367,7 +368,7 @@ function SecurityTab() {
 }
 
 function AppearanceTab() {
-  const [activeTheme, setActiveTheme] = useState('dark');
+  const { theme: activeTheme, setTheme } = useTheme();
   const [fontSize, setFontSize] = useState('medium');
   const [compactMode, setCompactMode] = useState(false);
   const [sidebarPos, setSidebarPos] = useState('left');
@@ -376,12 +377,13 @@ function AppearanceTab() {
     apiFetch('/api/settings/appearance')
       .then(r => r.json())
       .then(data => {
-        if (data.theme) setActiveTheme(data.theme);
+        if (data.theme) setTheme(data.theme);
         if (data.font_size) setFontSize(data.font_size);
         if (data.compact_mode !== undefined) setCompactMode(data.compact_mode);
         if (data.sidebar_position) setSidebarPos(data.sidebar_position);
       })
       .catch(err => console.error('Failed to load appearance settings:', err));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   const saveSettings = useCallback((updates) => {
@@ -392,7 +394,7 @@ function AppearanceTab() {
   }, []);
 
   const handleTheme = (id) => {
-    setActiveTheme(id);
+    setTheme(id);
     saveSettings({ theme: id });
   };
   const handleFontSize = (s) => {
