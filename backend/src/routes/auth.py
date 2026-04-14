@@ -1,6 +1,6 @@
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
-from src.extensions import db
+from src.extensions import db, limiter
 from src.models import User, UserSettings, TokenBlocklist
 from src.auth import generate_access_token, generate_refresh_token, decode_token
 
@@ -8,6 +8,7 @@ auth_bp = Blueprint('auth', __name__)
 
 
 @auth_bp.route('/api/auth/register', methods=['POST'])
+@limiter.limit("5 per minute")
 def register():
     data = request.get_json()
     first_name = data.get('first_name', '').strip()
@@ -18,8 +19,8 @@ def register():
     if not all([first_name, last_name, email, password]):
         return jsonify({'error': 'All fields are required'}), 400
 
-    if len(password) < 6:
-        return jsonify({'error': 'Password must be at least 6 characters'}), 400
+    if len(password) < 8:
+        return jsonify({'error': 'Password must be at least 8 characters'}), 400
 
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email already registered'}), 409
@@ -54,6 +55,7 @@ def register():
 
 
 @auth_bp.route('/api/auth/login', methods=['POST'])
+@limiter.limit("10 per minute")
 def login():
     data = request.get_json()
     email = data.get('email', '').strip().lower()

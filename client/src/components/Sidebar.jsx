@@ -160,15 +160,6 @@ export default function Sidebar() {
                 </span>
                 My Drive
               </div>
-              <button
-                onClick={handleDriveToggle}
-                className="w-5 h-5 flex items-center justify-center rounded hover:bg-slate-200 dark:hover:bg-border-dark transition-colors flex-shrink-0"
-                title="Show folders"
-              >
-                <span className={`material-symbols-outlined text-[16px] transition-transform duration-200 ${driveOpen ? 'rotate-90' : ''}`}>
-                  chevron_right
-                </span>
-              </button>
             </div>
 
             {driveOpen && (

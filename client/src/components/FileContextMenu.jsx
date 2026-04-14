@@ -55,30 +55,19 @@ function useClickOutside(ref, onClose) {
   }, [ref, onClose])
 }
 
-const fileActions = [
-  { id: 'preview', label: 'Preview', icon: 'visibility', shortcut: 'Space' },
-  { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
-  { id: 'star', label: 'Add to Starred', icon: 'star' },
-  { id: 'details', label: 'Details', icon: 'info' },
-  { type: 'divider' },
-  { id: 'move', label: 'Move to', icon: 'drive_file_move' },
-  { id: 'share', label: 'Share', icon: 'share' },
-  { id: 'download', label: 'Download', icon: 'download', shortcut: 'Ctrl+D' },
-  { type: 'divider' },
-  { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
-]
-
-function getFolderActions(isLocked) {
+function getActions(isFolder, isLocked) {
   return [
-    { id: 'open', label: 'Open', icon: 'folder_open' },
+    isFolder
+      ? { id: 'open', label: 'Open', icon: 'folder_open' }
+      : { id: 'preview', label: 'Preview', icon: 'visibility', shortcut: 'Space' },
     { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
     { id: 'star', label: 'Add to Starred', icon: 'star' },
+    { id: 'details', label: 'Details', icon: 'info' },
     { type: 'divider' },
-    { id: 'lock', label: isLocked ? 'Unlock folder' : 'Lock folder', icon: isLocked ? 'lock_open' : 'lock' },
+    ...(isFolder ? [{ id: 'lock', label: isLocked ? 'Unlock folder' : 'Lock folder', icon: isLocked ? 'lock_open' : 'lock' }] : []),
     { id: 'move', label: 'Move to', icon: 'drive_file_move' },
     { id: 'share', label: 'Share', icon: 'share' },
-    { id: 'details', label: 'Details', icon: 'info' },
-    { id: 'download', label: 'Download as ZIP', icon: 'folder_zip' },
+    { id: 'download', label: isFolder ? 'Download as ZIP' : 'Download', icon: isFolder ? 'folder_zip' : 'download', ...(!isFolder ? { shortcut: 'Ctrl+D' } : {}) },
     { type: 'divider' },
     { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
   ]
@@ -128,7 +117,7 @@ function MenuDropdown({ anchorRect, onClose, onAction, isFolder, isLocked }) {
           }
         `}
       >
-        {(isFolder ? getFolderActions(isLocked) : fileActions).map((action, index) => {
+        {getActions(isFolder, isLocked).map((action, index) => {
           if (action.type === 'divider') {
             return (
               <div

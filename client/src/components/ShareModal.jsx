@@ -187,7 +187,7 @@ export default function ShareModal({ item, onClose }) {
 
         {/* Footer */}
         <div className="px-6 py-4 border-t border-slate-100 dark:border-border-dark flex-shrink-0">
-          <button onClick={onClose} className="w-full py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">
+          <button onClick={onClose} className="w-full py-2.5 text-sm font-semibold text-white bg-primary hover:bg-blue-600 rounded-xl transition-colors">
             Done
           </button>
         </div>

@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
-import { apiFetch, getAccessToken } from '../lib/api'
+import { apiFetch, downloadFile } from '../lib/api'
 import FileContextMenu from '../components/FileContextMenu'
 import FilePreviewModal from '../components/FilePreviewModal'
 import ItemDetailsModal from '../components/ItemDetailsModal'
+import MoveItemModal from '../components/MoveItemModal'
+import ShareModal from '../components/ShareModal'
 
 function StatCard({ stat }) {
   return (
@@ -182,6 +184,8 @@ export default function Dashboard() {
   const [detailsItemId, setDetailsItemId] = useState(null)
   const [renameTarget, setRenameTarget] = useState(null)
   const [trashTarget, setTrashTarget] = useState(null)
+  const [moveTarget, setMoveTarget] = useState(null)
+  const [shareTarget, setShareTarget] = useState(null)
 
   useEffect(() => {
     Promise.allSettled([
@@ -269,11 +273,7 @@ export default function Dashboard() {
     if (action === 'preview') {
       setPreviewFile(file)
     } else if (action === 'download') {
-      const token = getAccessToken()
-      const a = document.createElement('a')
-      a.href = `/api/files/${file.id}/download?token=${token}`
-      a.download = file.name
-      a.click()
+      downloadFile(file.id, file.name).catch(() => {})
     } else if (action === 'star') {
       apiFetch(`/api/files/${file.id}/star`, { method: 'PUT' })
         .then(() => setQuickAccessFiles(prev => prev.map(f => f.id === file.id ? { ...f, is_starred: !f.is_starred } : f)))
@@ -282,6 +282,10 @@ export default function Dashboard() {
       setRenameTarget(file)
     } else if (action === 'details') {
       setDetailsItemId(file.id)
+    } else if (action === 'move') {
+      setMoveTarget(file)
+    } else if (action === 'share') {
+      setShareTarget(file)
     } else if (action === 'trash') {
       setTrashTarget(file)
     }
@@ -313,7 +317,7 @@ export default function Dashboard() {
       {/* Main Grid: Storage + Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
         {/* Storage Breakdown */}
-        <div className="lg:col-span-1 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
+        <div className="lg:col-span-1 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5 flex flex-col">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Storage Breakdown</h3>
             <Link to="/settings" className="text-xs text-primary hover:text-blue-600 font-medium transition-colors">Manage</Link>
@@ -348,7 +352,7 @@ export default function Dashboard() {
           </div>
 
           {/* Total */}
-          <div className="mt-4 pt-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
+          <div className="mt-auto pt-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
             <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total used</span>
             <span className="text-sm font-bold text-slate-900 dark:text-white">{storageTotal.used} / {storageTotal.limit}</span>
           </div>
@@ -375,7 +379,7 @@ export default function Dashboard() {
         <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Quick Access</h3>
-            <Link to="/drive" className="text-xs text-primary hover:text-blue-600 font-medium transition-colors">My Drive</Link>
+            <Link to="/drive" className="text-xs text-primary hover:text-blue-400 hover:underline font-medium transition-colors">My Drive</Link>
           </div>
 
           <div className="space-y-0">
@@ -424,6 +428,22 @@ export default function Dashboard() {
           file={trashTarget}
           onClose={() => setTrashTarget(null)}
           onTrashed={(id) => setQuickAccessFiles(prev => prev.filter(f => f.id !== id))}
+        />
+      )}
+      {moveTarget && (
+        <MoveItemModal
+          item={moveTarget}
+          onClose={() => setMoveTarget(null)}
+          onMoved={() => {
+            setQuickAccessFiles(prev => prev.filter(f => f.id !== moveTarget.id))
+            setMoveTarget(null)
+          }}
+        />
+      )}
+      {shareTarget && (
+        <ShareModal
+          item={shareTarget}
+          onClose={() => setShareTarget(null)}
         />
       )}
     </div>

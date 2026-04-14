@@ -18,71 +18,50 @@
         flex-direction: column;
         align-items: center;
         justify-content: center;
+        gap: 0;
         background: #101922;
-        transition: opacity 0.5s ease, visibility 0.5s ease;
+        transition: opacity 0.4s ease, visibility 0.4s ease;
       }
       #loading-screen.hidden {
         opacity: 0;
         visibility: hidden;
         pointer-events: none;
       }
-      .loader-icon {
-        position: relative;
-        width: 56px;
-        height: 56px;
-        margin-bottom: 28px;
-        animation: fadeIn 0.4s ease both;
-      }
-      .loader-icon-ring {
-        position: absolute;
-        inset: 0;
-        border-radius: 50%;
-        border: 2.5px solid transparent;
-        border-top-color: #258cf4;
-        animation: spin 1s cubic-bezier(0.45, 0.05, 0.55, 0.95) infinite;
-      }
-      .loader-icon-ring:nth-child(2) {
-        inset: 6px;
-        border-top-color: transparent;
-        border-right-color: #258cf4;
-        opacity: 0.4;
-        animation-duration: 1.5s;
-        animation-direction: reverse;
-      }
-      .loader-icon-cloud {
-        position: absolute;
-        inset: 0;
+      .loader-logo {
         display: flex;
         align-items: center;
-        justify-content: center;
+        gap: 10px;
+        animation: loaderFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
+      }
+      .loader-cloud-icon {
         font-family: 'Material Symbols Outlined';
-        font-size: 24px;
+        font-size: 32px;
         color: #258cf4;
         font-variation-settings: 'FILL' 1;
+        line-height: 1;
+      }
+      .loader-name {
+        font-family: 'Inter', system-ui, sans-serif;
+        font-size: 20px;
+        font-weight: 700;
+        color: #ffffff;
+        letter-spacing: -0.02em;
       }
       .loader-bar-track {
-        width: 180px;
-        height: 3px;
+        width: 140px;
+        height: 2px;
         background: #1e2a36;
         border-radius: 99px;
         overflow: hidden;
-        animation: fadeIn 0.4s ease 0.15s both;
+        margin-top: 32px;
+        animation: loaderFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) 0.1s both;
       }
       .loader-bar-fill {
         height: 100%;
-        width: 40%;
-        background: linear-gradient(90deg, #258cf4, #60bfff);
+        width: 45%;
+        background: linear-gradient(90deg, transparent, #258cf4, #60bfff, transparent);
         border-radius: 99px;
-        animation: barSlide 1.2s ease-in-out infinite;
-      }
-      .loader-label {
-        margin-top: 18px;
-        font-family: 'Inter', system-ui, sans-serif;
-        font-size: 12px;
-        font-weight: 500;
-        color: #475569;
-        letter-spacing: 0.04em;
-        animation: fadeIn 0.4s ease 0.25s both;
+        animation: barSlide 1.4s ease-in-out infinite;
       }
       #root {
         opacity: 0;
@@ -91,31 +70,25 @@
       #root.ready {
         opacity: 1;
       }
-      @keyframes spin {
-        to { transform: rotate(360deg); }
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
+      @keyframes loaderFadeUp {
+        from { opacity: 0; transform: translateY(8px); }
+        to   { opacity: 1; transform: translateY(0); }
       }
       @keyframes barSlide {
-        0%   { transform: translateX(-100%); }
-        50%  { transform: translateX(200%); }
-        100% { transform: translateX(-100%); }
+        0%   { transform: translateX(-150%); }
+        100% { transform: translateX(400%); }
       }
     </style>
   </head>
   <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
     <div id="loading-screen">
-      <div class="loader-icon">
-        <div class="loader-icon-ring"></div>
-        <div class="loader-icon-ring"></div>
-        <div class="loader-icon-cloud">cloud</div>
+      <div class="loader-logo">
+        <span class="loader-cloud-icon">cloud</span>
+        <span class="loader-name">CloudSpace</span>
       </div>
       <div class="loader-bar-track">
         <div class="loader-bar-fill"></div>
       </div>
-      <div class="loader-label">CLOUDSPACE</div>
     </div>
 
     <div id="root"></div>

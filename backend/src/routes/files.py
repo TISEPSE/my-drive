@@ -33,7 +33,7 @@ ALLOWED_MIME_PREFIXES = [
     'application/vnd.ms-excel', 'application/vnd.ms-powerpoint',
 ]
 
-BLOCKED_MIME_TYPES = {'image/svg+xml'}
+BLOCKED_MIME_TYPES = {'image/svg+xml', 'text/html', 'application/xhtml+xml'}
 
 
 @files_bp.route('/api/files/upload', methods=['POST'])
@@ -234,6 +234,8 @@ def rename_file(file_id):
 
     if not new_name:
         return jsonify({'error': 'Name is required'}), 400
+    if len(new_name) > 255:
+        return jsonify({'error': 'Name must be 255 characters or less'}), 400
 
     f = File.query.filter_by(id=file_id, owner_id=g.current_user_id).first()
     if not f:
@@ -293,8 +295,8 @@ def toggle_lock(file_id):
     password = data.get('password', '').strip()
 
     if not f.is_locked:
-        if not password or len(password) < 4:
-            return jsonify({'error': 'Password must be at least 4 characters'}), 400
+        if not password or len(password) < 6:
+            return jsonify({'error': 'Password must be at least 6 characters'}), 400
         f.is_locked = True
         f.lock_password_hash = generate_password_hash(password)
         action = 'file_locked'

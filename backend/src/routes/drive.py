@@ -127,6 +127,8 @@ def create_folder():
 
     if not name:
         return jsonify({'error': 'Folder name is required'}), 400
+    if len(name) > 255:
+        return jsonify({'error': 'Folder name must be 255 characters or less'}), 400
 
     if parent_id in ('null', '', 'undefined', None):
         parent_id = None
