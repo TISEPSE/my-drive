@@ -120,3 +120,20 @@ class ActivityLog(db.Model):
     details = db.Column(db.JSON, nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
                            index=True)
+
+
+class GitHubConnection(db.Model):
+    __tablename__ = 'github_connection'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), unique=True, nullable=False)
+    github_user_id = db.Column(db.String(50), nullable=False)
+    github_username = db.Column(db.String(100), nullable=False)
+    github_avatar_url = db.Column(db.String(500), nullable=True)
+    github_name = db.Column(db.String(200), nullable=True)
+    access_token = db.Column(db.String(500), nullable=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+    updated_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc),
+                           onupdate=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship('User', backref=db.backref('github_connection', uselist=False))

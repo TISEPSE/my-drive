@@ -37,6 +37,10 @@ def create_app():
     app = Flask(__name__)
 
     app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'dev-secret')
+    app.config['GITHUB_CLIENT_ID'] = os.getenv('GITHUB_CLIENT_ID')
+    app.config['GITHUB_CLIENT_SECRET'] = os.getenv('GITHUB_CLIENT_SECRET')
+    app.config['GITHUB_CALLBACK_URL'] = os.getenv('GITHUB_CALLBACK_URL', 'http://localhost:8080/api/github/callback')
+    app.config['FRONTEND_URL'] = os.getenv('FRONTEND_URL', 'http://localhost:8080')
     app.config['SQLALCHEMY_DATABASE_URI'] = os.getenv('DATABASE_URL', 'sqlite:///cloudspace.db')
     app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
     app.config['UPLOAD_FOLDER'] = os.getenv('UPLOAD_FOLDER', './uploads')
@@ -74,7 +78,7 @@ def create_app():
 
     # Create tables and seed
     with app.app_context():
-        from src.models import User, File, ActivityLog, UserSettings, TokenBlocklist  # noqa: F401
+        from src.models import User, File, ActivityLog, UserSettings, TokenBlocklist, GitHubConnection  # noqa: F401
         db.create_all()
         from src.seed import seed_data
         seed_data()

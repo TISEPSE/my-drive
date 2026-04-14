@@ -8,5 +8,6 @@ werkzeug
 psycopg2-binary
 PyJWT
 python-magic
+requests
 pytest
 pytest-flask
