@@ -6,7 +6,7 @@ from flask import Blueprint, request, jsonify, current_app, send_file, g
 from werkzeug.utils import secure_filename
 from src.extensions import db
 from src.models import File, User, ActivityLog, SharedFile
-from src.utils import get_icon_for_mime, format_file_size
+from src.utils import get_icon_for_mime, format_file_size, format_relative_time
 from src.auth import login_required
 
 logger = logging.getLogger(__name__)
@@ -544,3 +544,201 @@ def download_folder_zip(file_id):
         as_attachment=True,
         download_name=f"{folder.name}.zip",
     )
+
+
+@files_bp.route('/api/files/starred', methods=['GET'])
+@login_required
+def list_starred():
+    items = File.query.filter_by(
+        owner_id=g.current_user_id,
+        is_starred=True,
+        is_trashed=False,
+    ).order_by(File.updated_at.desc()).all()
+
+    def serialize(f):
+        return {
+            'id': f.id,
+            'name': f.name,
+            'is_folder': f.is_folder,
+            'mime_type': f.mime_type,
+            'size': f.size,
+            'formatted_size': format_file_size(f.size) if f.size else '--',
+            'icon': f.icon,
+            'icon_color': f.icon_color,
+            'icon_bg': f.icon_bg or ('bg-yellow-50 dark:bg-yellow-500/10' if f.is_folder else 'bg-slate-50'),
+            'is_starred': f.is_starred,
+            'is_locked': f.is_locked,
+            'updated_at': f.updated_at.isoformat() + 'Z' if f.updated_at else None,
+            'relative_time': format_relative_time(f.updated_at) if f.updated_at else None,
+            'items_count': File.query.filter_by(parent_id=f.id, is_trashed=False).count() if f.is_folder else None,
+        }
+
+    folders = [serialize(f) for f in items if f.is_folder]
+    files = [serialize(f) for f in items if not f.is_folder]
+    return jsonify({'folders': folders, 'files': files})
+
+
+@files_bp.route('/api/files/recent', methods=['GET'])
+@login_required
+def list_recent():
+    from collections import defaultdict
+    from datetime import datetime, timezone, timedelta
+    from src.models import ActivityLog
+
+    activities = ActivityLog.query.filter(
+        ActivityLog.user_id == g.current_user_id,
+        ActivityLog.file_id.isnot(None),
+    ).order_by(ActivityLog.created_at.desc()).limit(100).all()
+
+    seen = set()
+    ordered_files = []
+    for act in activities:
+        if act.file_id in seen:
+            continue
+        seen.add(act.file_id)
+        f = db.session.get(File, act.file_id)
+        if f and not f.is_trashed and not f.is_folder:
+            ordered_files.append((f, act))
+
+    now = datetime.now(timezone.utc)
+    today = now.date()
+    yesterday = (now - timedelta(days=1)).date()
+    week_ago = now - timedelta(days=7)
+
+    groups = defaultdict(list)
+    group_order = []
+
+    action_labels = {
+        'file_uploaded': 'Importé',
+        'file_edited': 'Modifié',
+        'file_viewed': 'Consulté',
+        'file_renamed': 'Renommé',
+        'file_starred': 'Mis en favori',
+        'file_downloaded': 'Téléchargé',
+    }
+
+    for f, act in ordered_files[:50]:
+        act_date = act.created_at.date() if act.created_at else today
+        if act_date == today:
+            group_key = "Aujourd'hui"
+        elif act_date == yesterday:
+            group_key = 'Hier'
+        elif act.created_at and act.created_at >= week_ago:
+            group_key = 'Cette semaine'
+        else:
+            group_key = 'Plus tôt'
+
+        if group_key not in group_order:
+            group_order.append(group_key)
+
+        activity_label = action_labels.get(act.action, 'Accédé')
+        if act.created_at:
+            time_str = act.created_at.strftime('%H:%M')
+            activity_str = f"{activity_label} à {time_str}"
+        else:
+            activity_str = activity_label
+
+        groups[group_key].append({
+            'id': f.id,
+            'name': f.name,
+            'mime_type': f.mime_type,
+            'size': f.size,
+            'formatted_size': format_file_size(f.size) if f.size else '--',
+            'icon': f.icon,
+            'icon_color': f.icon_color,
+            'icon_bg': f.icon_bg or 'bg-slate-50',
+            'activity': activity_str,
+            'updated_at': f.updated_at.isoformat() + 'Z' if f.updated_at else None,
+        })
+
+    result = [{'date': key, 'files': groups[key]} for key in group_order]
+    return jsonify({'groups': result})
+
+
+@files_bp.route('/api/files/gallery', methods=['GET'])
+@login_required
+def list_gallery():
+    images = File.query.filter(
+        File.owner_id == g.current_user_id,
+        File.is_trashed == False,
+        File.is_folder == False,
+        File.mime_type.like('image/%'),
+    ).order_by(File.created_at.desc()).all()
+
+    return jsonify({'images': [{
+        'id': f.id,
+        'name': f.name,
+        'mime_type': f.mime_type,
+        'size': f.size,
+        'formatted_size': format_file_size(f.size) if f.size else '--',
+        'created_at': f.created_at.isoformat() + 'Z' if f.created_at else None,
+    } for f in images]})
+
+
+@files_bp.route('/api/files/<file_id>/copy', methods=['POST'])
+@login_required
+def copy_file(file_id):
+    import shutil
+
+    f = File.query.filter_by(id=file_id, owner_id=g.current_user_id, is_folder=False).first()
+    if not f:
+        return jsonify({'error': 'File not found'}), 404
+
+    data = request.get_json() or {}
+    destination_id = data.get('destination_id') or f.parent_id
+
+    base, ext = os.path.splitext(f.name)
+    copy_name = f"{base} (copie){ext}"
+    counter = 2
+    while File.query.filter_by(
+        owner_id=g.current_user_id, parent_id=destination_id,
+        name=copy_name, is_trashed=False,
+    ).first():
+        copy_name = f"{base} (copie {counter}){ext}"
+        counter += 1
+
+    new_storage_path = None
+    if f.storage_path and os.path.exists(f.storage_path):
+        upload_folder = current_app.config['UPLOAD_FOLDER']
+        user_dir = os.path.join(upload_folder, 'files', g.current_user_id)
+        os.makedirs(user_dir, exist_ok=True)
+        new_uuid = str(uuid.uuid4())
+        _, file_ext = os.path.splitext(f.storage_path)
+        new_storage_path = os.path.join(user_dir, new_uuid + file_ext)
+        shutil.copy2(f.storage_path, new_storage_path)
+
+    new_file = File(
+        name=copy_name,
+        is_folder=False,
+        mime_type=f.mime_type,
+        size=f.size,
+        icon=f.icon,
+        icon_color=f.icon_color,
+        icon_bg=f.icon_bg,
+        owner_id=g.current_user_id,
+        parent_id=destination_id,
+        storage_path=new_storage_path,
+    )
+    db.session.add(new_file)
+
+    user = db.session.get(User, g.current_user_id)
+    if user and f.size:
+        user.storage_used = (user.storage_used or 0) + f.size
+
+    db.session.add(ActivityLog(
+        user_id=g.current_user_id, file_id=new_file.id, action='file_copied',
+        details={'original_id': file_id},
+    ))
+    db.session.commit()
+
+    return jsonify({
+        'id': new_file.id,
+        'name': new_file.name,
+        'mime_type': new_file.mime_type,
+        'size': new_file.size,
+        'formatted_size': format_file_size(new_file.size) if new_file.size else '--',
+        'icon': new_file.icon,
+        'icon_color': new_file.icon_color,
+        'icon_bg': new_file.icon_bg,
+        'parent_id': new_file.parent_id,
+    }), 201
