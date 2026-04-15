@@ -44,17 +44,17 @@ export default function Login() {
       <div className="w-full max-w-[400px] mx-4 relative z-10">
         {/* Logo */}
         <div className="flex items-center justify-center gap-2.5 mb-8">
-          <span className="material-symbols-outlined text-3xl text-primary">cloud_circle</span>
-          <h1 className="text-white text-xl font-bold tracking-tight">CloudSpace</h1>
+          <span className="material-symbols-outlined text-xl text-primary">cloud_circle</span>
+          <h1 className="text-white text-lg font-bold tracking-tight">CloudSpace</h1>
         </div>
 
         {/* Card */}
         <div className="bg-[#1A2633] rounded-2xl border border-[#283039] p-7 shadow-2xl shadow-black/30">
           <h2 className="text-lg font-semibold text-white mb-1">
-            {isRegister ? 'Create account' : 'Welcome back'}
+            {isRegister ? 'Créer un compte' : 'Bon retour'}
           </h2>
           <p className="text-sm text-slate-400 mb-6">
-            {isRegister ? 'Sign up to get started with CloudSpace' : 'Sign in to your workspace'}
+            {isRegister ? 'Inscrivez-vous pour commencer sur CloudSpace' : 'Connectez-vous à votre espace'}
           </p>
 
           {error && (
@@ -69,7 +69,7 @@ export default function Login() {
               <div className="grid grid-cols-2 gap-3">
                 <input
                   type="text"
-                  placeholder="First name"
+                  placeholder="Prénom"
                   value={firstName}
                   onChange={(e) => setFirstName(e.target.value)}
                   required
@@ -77,7 +77,7 @@ export default function Login() {
                 />
                 <input
                   type="text"
-                  placeholder="Last name"
+                  placeholder="Nom"
                   value={lastName}
                   onChange={(e) => setLastName(e.target.value)}
                   required
@@ -89,7 +89,7 @@ export default function Login() {
             <div>
               <input
                 type="email"
-                placeholder="Email address"
+                placeholder="Adresse e-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -100,7 +100,7 @@ export default function Login() {
             <div>
               <input
                 type="password"
-                placeholder="Password"
+                placeholder="Mot de passe"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -120,21 +120,21 @@ export default function Login() {
                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="3" />
                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                   </svg>
-                  {isRegister ? 'Creating account...' : 'Signing in...'}
+                  {isRegister ? 'Création...' : 'Connexion...'}
                 </span>
               ) : (
-                isRegister ? 'Create Account' : 'Sign In'
+                isRegister ? 'Créer un compte' : 'Se connecter'
               )}
             </button>
           </form>
 
           <p className="mt-5 text-center text-sm text-slate-400">
-            {isRegister ? 'Already have an account?' : "Don't have an account?"}
+            {isRegister ? 'Déjà un compte ?' : "Pas encore de compte ?"}
             <button
               onClick={toggleMode}
               className="ml-1.5 text-primary hover:text-blue-400 font-medium transition-colors"
             >
-              {isRegister ? 'Sign in' : 'Sign up'}
+              {isRegister ? 'Se connecter' : "S'inscrire"}
             </button>
           </p>
         </div>

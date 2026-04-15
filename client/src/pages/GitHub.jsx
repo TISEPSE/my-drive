@@ -32,7 +32,7 @@ function RepoCard({ repo }) {
       {/* Header */}
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <span className="material-symbols-outlined text-[18px] text-slate-400 flex-shrink-0">
+          <span className="material-symbols-outlined text-slate-400 flex-shrink-0">
             {repo.fork ? 'fork_right' : 'folder_code'}
           </span>
           <span className="text-sm font-semibold text-slate-800 dark:text-white truncate">
@@ -110,9 +110,9 @@ function RepoCard({ repo }) {
             href={repo.homepage}
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/10 hover:bg-primary/20 rounded-lg transition-colors"
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-700 dark:text-slate-300 bg-slate-100 dark:bg-border-dark hover:bg-slate-200 dark:hover:bg-slate-600 rounded-lg transition-colors"
           >
-            <span className="material-symbols-outlined text-[14px] leading-none">open_in_new</span>
+            <svg viewBox="0 0 24 24" className="w-3.5 h-3.5 fill-current flex-shrink-0"><path d="M19 19H5V5h7V3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7h-2v7zM14 3v2h3.59l-9.83 9.83 1.41 1.41L19 6.41V10h2V3h-7z"/></svg>
             Website
           </a>
         )}
@@ -386,7 +386,7 @@ export default function GitHub() {
             className="flex items-center justify-center w-9 h-9 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors disabled:opacity-50"
             title="Refresh"
           >
-            <span className={`material-symbols-outlined text-[18px] leading-none ${loadingRepos ? 'animate-spin' : ''}`}>refresh</span>
+            <span className={`material-symbols-outlined leading-none ${loadingRepos ? 'animate-spin' : ''}`}>refresh</span>
           </button>
         </div>
 
@@ -399,7 +399,7 @@ export default function GitHub() {
           </div>
         ) : filtered.length === 0 ? (
           <div className="flex flex-col items-center justify-center py-16 text-slate-400">
-            <span className="material-symbols-outlined text-4xl mb-3">folder_off</span>
+            <span className="material-symbols-outlined text-3xl mb-3">folder_off</span>
             <p className="text-sm">{repos.length === 0 ? 'No repositories found' : 'No results match your filters'}</p>
           </div>
         ) : (

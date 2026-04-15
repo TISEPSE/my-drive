@@ -72,7 +72,7 @@ const sharedFiles = [
 
 export default function SharedWithMe() {
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8">
+    <div className="flex-1 overflow-y-auto p-6">
       {/* Title row */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between mb-6">
         <div>
@@ -88,13 +88,13 @@ export default function SharedWithMe() {
           {/* List / Grid toggle */}
           <div className="flex items-center rounded-lg border border-slate-200 dark:border-slate-700 overflow-hidden">
             <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-primary bg-primary/5 dark:bg-primary/10">
-              <span className="material-symbols-outlined text-[18px]">
+              <span className="material-symbols-outlined">
                 view_list
               </span>
               List
             </button>
             <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-              <span className="material-symbols-outlined text-[18px]">
+              <span className="material-symbols-outlined">
                 grid_view
               </span>
               Grid
@@ -103,7 +103,7 @@ export default function SharedWithMe() {
 
           {/* Filter button */}
           <button className="flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-slate-700 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-800 transition-colors">
-            <span className="material-symbols-outlined text-[18px]">
+            <span className="material-symbols-outlined">
               filter_list
             </span>
             Filter
@@ -145,10 +145,10 @@ export default function SharedWithMe() {
                     {/* Icon with shared badge */}
                     <div className="relative flex-shrink-0">
                       <div
-                        className={`w-8 h-8 rounded-lg ${file.iconBg} flex items-center justify-center`}
+                        className={`w-7 h-7 rounded-lg ${file.iconBg} flex items-center justify-center`}
                       >
                         <span
-                          className={`material-symbols-outlined text-lg ${file.iconColor} ${file.isFolder ? "fill-current" : ""}`}
+                          className={`material-symbols-outlined text-[14px] leading-none ${file.iconColor} ${file.isFolder ? "fill-current" : ""}`}
                           style={file.isFolder ? { fontVariationSettings: "'FILL' 1" } : undefined}
                         >
                           {file.icon}
@@ -202,7 +202,7 @@ export default function SharedWithMe() {
                 {/* Actions */}
                 <td className="px-5 py-3 text-right">
                   <FileContextMenu className="p-1 rounded-lg text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
-                    <span className="material-symbols-outlined text-[18px]">
+                    <span className="material-symbols-outlined">
                       more_vert
                     </span>
                   </FileContextMenu>

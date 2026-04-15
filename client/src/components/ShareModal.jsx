@@ -25,7 +25,7 @@ function ShareRow({ share, onRemove }) {
         className="w-7 h-7 flex items-center justify-center rounded-lg text-slate-400 hover:text-red-500 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors flex-shrink-0"
         title="Remove access"
       >
-        <span className="material-symbols-outlined text-[18px]">person_remove</span>
+        <span className="material-symbols-outlined">person_remove</span>
       </button>
     </div>
   )

@@ -118,11 +118,11 @@ export default function UploadToaster() {
           <div className="flex items-center gap-1">
             {doneCount > 0 && !allDone && (
               <button onClick={clearDone} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded transition-colors" title="Clear completed">
-                <span className="material-symbols-outlined text-[18px]">playlist_remove</span>
+                <span className="material-symbols-outlined">playlist_remove</span>
               </button>
             )}
             <button onClick={dismiss} className="p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 rounded transition-colors">
-              <span className="material-symbols-outlined text-[18px]">close</span>
+              <span className="material-symbols-outlined">close</span>
             </button>
           </div>
         </div>

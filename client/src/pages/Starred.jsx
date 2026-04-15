@@ -21,7 +21,7 @@ function FolderRow({ folder }) {
   return (
     <div className="flex items-center p-3 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] cursor-pointer transition-colors shadow-sm group">
       <div className="relative mr-3 flex-shrink-0">
-        <span className={`material-symbols-outlined text-2xl ${folder.iconColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
+        <span className={`material-symbols-outlined text-xl ${folder.iconColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
         {folder.locked && (
           <span className="absolute -bottom-0.5 -right-1 material-symbols-outlined text-[10px] text-slate-400 dark:text-slate-500" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
         )}
@@ -39,7 +39,7 @@ function FileCard({ file }) {
   return (
     <div className="group relative bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg p-2 hover:border-primary/50 dark:hover:border-primary/50 hover:shadow-md transition-all cursor-pointer">
       <div className={`aspect-[4/3] ${file.iconBg} rounded-md mb-2 flex items-center justify-center overflow-hidden border border-slate-100 dark:border-border-dark`}>
-        <span className={`material-symbols-outlined text-3xl ${file.iconColor} opacity-80 group-hover:scale-110 transition-transform duration-300`}>{file.icon}</span>
+        <span className={`material-symbols-outlined text-2xl ${file.iconColor} opacity-80 group-hover:scale-110 transition-transform duration-300`}>{file.icon}</span>
       </div>
       <div className="flex items-center">
         <div className="flex-1 min-w-0">
@@ -58,15 +58,15 @@ export default function Starred() {
   const [view, setView] = useState('grid')
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8">
+    <div className="flex-1 overflow-y-auto p-6">
 
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/15 flex items-center justify-center">
-            <span className="material-symbols-outlined text-xl text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
+            <span className="material-symbols-outlined text-amber-500" style={{ fontVariationSettings: "'FILL' 1" }}>star</span>
           </div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Starred</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Favoris</h2>
         </div>
 
         <div className="flex items-center gap-2">
@@ -75,20 +75,20 @@ export default function Starred() {
               onClick={() => setView('grid')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${view === 'grid' ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
-              <span className="material-symbols-outlined text-[18px]">grid_view</span>
-              Grid
+              <span className="material-symbols-outlined">grid_view</span>
+              Grille
             </button>
             <button
               onClick={() => setView('list')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${view === 'list' ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
-              <span className="material-symbols-outlined text-[18px]">view_list</span>
-              List
+              <span className="material-symbols-outlined">view_list</span>
+              Liste
             </button>
           </div>
           <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
-            <span className="material-symbols-outlined text-[18px]">filter_list</span>
-            Filter
+            <span className="material-symbols-outlined">filter_list</span>
+            Filtrer
           </button>
         </div>
       </div>
@@ -97,7 +97,7 @@ export default function Starred() {
         <>
           {/* Folders */}
           <section className="mb-8">
-            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Folders</h3>
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Dossiers</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
               {starredFolders.map((folder) => (
                 <FolderRow key={folder.name} folder={folder} />
@@ -107,7 +107,7 @@ export default function Starred() {
 
           {/* Files */}
           <section>
-            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Files</h3>
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Fichiers</h3>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
               {starredFiles.map((file) => (
                 <FileCard key={file.name} file={file} />
@@ -133,7 +133,7 @@ export default function Starred() {
                   <td className="px-5 py-3">
                     <div className="flex items-center gap-3">
                       <div className="relative flex-shrink-0">
-                        <span className={`material-symbols-outlined text-2xl ${folder.iconColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
+                        <span className={`material-symbols-outlined text-xl ${folder.iconColor}`} style={{ fontVariationSettings: "'FILL' 1" }}>{folder.icon}</span>
                         {folder.locked && (
                           <span className="absolute -bottom-0.5 -right-1 material-symbols-outlined text-[10px] text-slate-400" style={{ fontVariationSettings: "'FILL' 1" }}>lock</span>
                         )}

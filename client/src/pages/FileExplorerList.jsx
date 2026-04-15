@@ -148,7 +148,7 @@ export default function FileExplorerList() {
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
-              <span className="material-symbols-outlined text-[18px]">
+              <span className="material-symbols-outlined">
                 grid_view
               </span>
               Grid
@@ -161,7 +161,7 @@ export default function FileExplorerList() {
                   : "text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-300"
               }`}
             >
-              <span className="material-symbols-outlined text-[18px]">
+              <span className="material-symbols-outlined">
                 view_list
               </span>
               List
@@ -170,7 +170,7 @@ export default function FileExplorerList() {
 
           {/* Filter button */}
           <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors">
-            <span className="material-symbols-outlined text-[18px]">
+            <span className="material-symbols-outlined">
               filter_list
             </span>
             Filter

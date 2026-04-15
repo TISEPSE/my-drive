@@ -19,6 +19,16 @@
   html {
     font-family: var(--font-display);
   }
+
+  /* Taille de base des icônes — modifier --icon-size pour ajuster globalement */
+  :root {
+    --icon-size: 18px;
+  }
+
+  .material-symbols-outlined {
+    font-size: var(--icon-size);
+    line-height: 1;
+  }
 }
 
 /* ── Per-theme CSS variable overrides ── */

@@ -117,7 +117,7 @@ export default function ItemDetailsModal({ itemId, onClose }) {
 
               <div className="px-6 pb-4">
                 <button onClick={() => setShowAdvanced(v => !v)} className="flex items-center gap-1 text-sm font-semibold text-primary py-2 hover:opacity-80 transition-opacity">
-                  <span className="material-symbols-outlined text-[18px]">{showAdvanced ? 'expand_less' : 'expand_more'}</span>
+                  <span className="material-symbols-outlined">{showAdvanced ? 'expand_less' : 'expand_more'}</span>
                   Advanced details
                 </button>
                 {showAdvanced && (

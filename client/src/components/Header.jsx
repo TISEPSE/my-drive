@@ -4,13 +4,13 @@ import { useLocation, useNavigate } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 const searchPlaceholders = {
-  '/dashboard': 'Search files, folders, or people...',
-  '/drive': 'Search in My Drive...',
-  '/shared': 'Search files, folders, or people...',
-  '/recent': 'Search recent files...',
-  '/starred': 'Search starred items...',
-  '/trash': 'Search deleted files...',
-  '/settings': 'Search files, folders, or people...',
+  '/dashboard': 'Rechercher des fichiers, dossiers ou personnes...',
+  '/drive': 'Rechercher dans Mon Drive...',
+  '/shared': 'Rechercher des fichiers, dossiers ou personnes...',
+  '/recent': 'Rechercher parmi les fichiers récents...',
+  '/starred': 'Rechercher parmi les favoris...',
+  '/trash': 'Rechercher dans la corbeille...',
+  '/settings': 'Rechercher des fichiers, dossiers ou personnes...',
 }
 
 export default function Header() {
@@ -96,14 +96,14 @@ export default function Header() {
       {/* Header Actions */}
       <div className="flex items-center gap-2 ml-4">
         <button className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors">
-          <span className="material-symbols-outlined text-[22px] leading-none">notifications</span>
+          <span className="material-symbols-outlined text-[20px] leading-none">notifications</span>
         </button>
         <button
           onClick={() => navigate('/settings')}
           className="w-9 h-9 flex items-center justify-center text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-white rounded-lg hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors"
-          title="Settings"
+          title="Paramètres"
         >
-          <span className="material-symbols-outlined text-[22px] leading-none">settings</span>
+          <span className="material-symbols-outlined text-[20px] leading-none">settings</span>
         </button>
         <div className="h-8 w-[1px] bg-slate-200 dark:bg-border-dark mx-1"></div>
 
@@ -157,15 +157,15 @@ export default function Header() {
                 }}
                 className="w-[calc(100%-8px)] mx-1 mt-1.5 flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors"
               >
-                <span className="material-symbols-outlined text-[20px] text-slate-400 dark:text-slate-400">settings</span>
-                <span className="text-[13px] font-medium">Settings</span>
+                <span className="material-symbols-outlined text-slate-400 dark:text-slate-400">settings</span>
+                <span className="text-[13px] font-medium">Paramètres</span>
               </button>
               <button
                 onClick={handleLogout}
                 className="w-[calc(100%-8px)] mx-1 flex items-center gap-2.5 px-2.5 py-[7px] rounded-lg text-red-500 dark:text-red-400 hover:bg-red-50 dark:hover:bg-red-500/10 transition-colors"
               >
-                <span className="material-symbols-outlined text-[20px]">logout</span>
-                <span className="text-[13px] font-medium">Sign out</span>
+                <span className="material-symbols-outlined">logout</span>
+                <span className="text-[13px] font-medium">Se déconnecter</span>
               </button>
             </div>
           </div>,

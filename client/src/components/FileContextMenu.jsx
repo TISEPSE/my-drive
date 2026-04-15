@@ -58,18 +58,18 @@ function useClickOutside(ref, onClose) {
 function getActions(isFolder, isLocked) {
   return [
     isFolder
-      ? { id: 'open', label: 'Open', icon: 'folder_open' }
-      : { id: 'preview', label: 'Preview', icon: 'visibility', shortcut: 'Space' },
-    { id: 'rename', label: 'Rename', icon: 'edit', shortcut: 'F2' },
-    { id: 'star', label: 'Add to Starred', icon: 'star' },
-    { id: 'details', label: 'Details', icon: 'info' },
+      ? { id: 'open', label: 'Ouvrir', icon: 'folder_open' }
+      : { id: 'preview', label: 'Aperçu', icon: 'visibility', shortcut: 'Space' },
+    { id: 'rename', label: 'Renommer', icon: 'edit', shortcut: 'F2' },
+    { id: 'star', label: 'Ajouter aux favoris', icon: 'star' },
+    { id: 'details', label: 'Détails', icon: 'info' },
     { type: 'divider' },
-    ...(isFolder ? [{ id: 'lock', label: isLocked ? 'Unlock folder' : 'Lock folder', icon: isLocked ? 'lock_open' : 'lock' }] : []),
-    { id: 'move', label: 'Move to', icon: 'drive_file_move' },
-    { id: 'share', label: 'Share', icon: 'share' },
-    { id: 'download', label: isFolder ? 'Download as ZIP' : 'Download', icon: isFolder ? 'folder_zip' : 'download', ...(!isFolder ? { shortcut: 'Ctrl+D' } : {}) },
+    ...(isFolder ? [{ id: 'lock', label: isLocked ? 'Déverrouiller' : 'Verrouiller', icon: isLocked ? 'lock_open' : 'lock' }] : []),
+    { id: 'move', label: 'Déplacer vers', icon: 'drive_file_move' },
+    { id: 'share', label: 'Partager', icon: 'share' },
+    { id: 'download', label: isFolder ? 'Télécharger en ZIP' : 'Télécharger', icon: isFolder ? 'folder_zip' : 'download', ...(!isFolder ? { shortcut: 'Ctrl+D' } : {}) },
     { type: 'divider' },
-    { id: 'trash', label: 'Move to Trash', icon: 'delete', danger: true, shortcut: 'Del' },
+    { id: 'trash', label: 'Mettre à la corbeille', icon: 'delete', danger: true, shortcut: 'Suppr' },
   ]
 }
 
@@ -142,7 +142,7 @@ function MenuDropdown({ anchorRect, onClose, onAction, isFolder, isLocked }) {
             >
               <span
                 className={`
-                  material-symbols-outlined text-[20px] flex-shrink-0
+                  material-symbols-outlined flex-shrink-0
                   ${action.danger
                     ? 'text-red-400 dark:text-red-400'
                     : 'text-slate-400 dark:text-slate-400 group-hover/item:text-slate-600 dark:group-hover/item:text-slate-200'
@@ -190,7 +190,7 @@ export default function FileContextMenu({ children, className, onAction, isFolde
         className={className || 'p-1 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-border-dark rounded-md transition-colors'}
       >
         {children || (
-          <span className="material-symbols-outlined text-[18px]">more_vert</span>
+          <span className="material-symbols-outlined">more_vert</span>
         )}
       </button>
 

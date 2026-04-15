@@ -131,11 +131,11 @@ export default function Gallery() {
   }
 
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8">
+    <div className="flex-1 overflow-y-auto p-6">
       {/* Toolbar */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-lg font-bold text-slate-900 dark:text-white">Gallery</h2>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Gallery</h2>
           <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{samplePhotos.length} photos</p>
         </div>
         <div className="flex items-center gap-3">
@@ -145,14 +145,14 @@ export default function Gallery() {
               onClick={() => setViewMode('grid')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${viewMode === 'grid' ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
-              <span className="material-symbols-outlined text-[18px]">grid_view</span>
+              <span className="material-symbols-outlined">grid_view</span>
               Grid
             </button>
             <button
               onClick={() => setViewMode('mosaic')}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${viewMode === 'mosaic' ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
-              <span className="material-symbols-outlined text-[18px]">view_quilt</span>
+              <span className="material-symbols-outlined">view_quilt</span>
               Mosaic
             </button>
           </div>
@@ -182,7 +182,7 @@ export default function Gallery() {
             onClick={() => fileInputRef.current?.click()}
             className="flex items-center gap-1.5 bg-primary hover:bg-blue-600 text-white text-sm font-semibold px-3.5 py-2 rounded-lg transition-colors"
           >
-            <span className="material-symbols-outlined text-[18px]">add_photo_alternate</span>
+            <span className="material-symbols-outlined">add_photo_alternate</span>
             Upload
           </button>
           <input ref={fileInputRef} type="file" multiple accept="image/*" className="hidden" />

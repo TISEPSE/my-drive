@@ -322,7 +322,7 @@ function LockFolderModal({ target, onClose, onConfirm, error }) {
 
 function DriveLoadingSkeleton() {
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8 animate-pulse">
+    <div className="flex-1 overflow-y-auto p-6 animate-pulse">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
           <div className="w-24 h-4 bg-slate-200 dark:bg-border-dark rounded" />
@@ -454,7 +454,7 @@ function FileCard({ file, onPreview, onAction }) {
             />
             <div className="absolute inset-0 flex items-center justify-center bg-black/25 group-hover:bg-black/15 transition-colors">
               <div className="w-8 h-8 rounded-full bg-black/55 flex items-center justify-center backdrop-blur-sm">
-                <span className="material-symbols-outlined text-[18px] text-white" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
+                <span className="material-symbols-outlined text-white" style={{ fontVariationSettings: "'FILL' 1" }}>play_arrow</span>
               </div>
             </div>
           </>
@@ -513,11 +513,11 @@ function DriveToolbar({ breadcrumbs, view, onViewChange, onNewFolder, fileInputR
 
       <div className="flex items-center gap-2">
         <button onClick={onNewFolder} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-[18px]">create_new_folder</span>
+          <span className="material-symbols-outlined">create_new_folder</span>
           New folder
         </button>
         <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark hover:text-primary transition-colors">
-          <span className="material-symbols-outlined text-[18px]">upload</span>
+          <span className="material-symbols-outlined">upload</span>
           Upload
         </button>
         <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileSelect} />
@@ -529,14 +529,14 @@ function DriveToolbar({ breadcrumbs, view, onViewChange, onNewFolder, fileInputR
               onClick={() => onViewChange(v)}
               className={`flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium transition-colors ${view === v ? 'text-primary bg-primary/5 dark:bg-primary/10' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
             >
-              <span className="material-symbols-outlined text-[18px]">{v === 'grid' ? 'grid_view' : 'view_list'}</span>
+              <span className="material-symbols-outlined">{v === 'grid' ? 'grid_view' : 'view_list'}</span>
               {v === 'grid' ? 'Grid' : 'List'}
             </button>
           ))}
         </div>
 
         <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
-          <span className="material-symbols-outlined text-[18px]">filter_list</span>
+          <span className="material-symbols-outlined">filter_list</span>
           Filter
         </button>
       </div>
@@ -852,7 +852,7 @@ export default function MyDrive() {
   return (
     <div
       ref={dropZoneRef}
-      className="flex-1 overflow-y-auto p-6 md:p-8 relative"
+      className="flex-1 overflow-y-auto p-6 relative"
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
       onDragOver={handleDragOver}

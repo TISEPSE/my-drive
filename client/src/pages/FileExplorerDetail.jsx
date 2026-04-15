@@ -126,17 +126,17 @@ export default function FileExplorerDetail() {
               onClick={() => setView('grid')}
               className={`p-1.5 rounded transition-all ${view === 'grid' ? 'bg-white dark:bg-border-dark text-primary shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
             >
-              <span className="material-symbols-outlined text-[18px]">grid_view</span>
+              <span className="material-symbols-outlined">grid_view</span>
             </button>
             <button
               onClick={() => setView('list')}
               className={`p-1.5 rounded transition-all ${view === 'list' ? 'bg-white dark:bg-border-dark text-primary shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}
             >
-              <span className="material-symbols-outlined text-[18px]">view_list</span>
+              <span className="material-symbols-outlined">view_list</span>
             </button>
           </div>
           <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm text-slate-600 dark:text-slate-300 rounded-lg border border-slate-200 dark:border-border-dark hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors">
-            <span className="material-symbols-outlined text-[18px]">filter_list</span>
+            <span className="material-symbols-outlined">filter_list</span>
             Filter
           </button>
         </div>

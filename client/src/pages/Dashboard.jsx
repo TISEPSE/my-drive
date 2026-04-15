@@ -13,7 +13,7 @@ function StatCard({ stat }) {
     <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-4">
       <div className="flex items-center justify-between mb-3">
         <div className={`w-10 h-10 rounded-lg ${stat.iconBg} flex items-center justify-center`}>
-          <span className={`material-symbols-outlined text-xl ${stat.iconColor}`}>{stat.icon}</span>
+          <span className={`material-symbols-outlined ${stat.iconColor}`}>{stat.icon}</span>
         </div>
       </div>
       <p className="text-2xl font-bold text-slate-900 dark:text-white">{stat.value}</p>
@@ -58,7 +58,7 @@ function QuickAccessItem({ file, isLast, onAction }) {
       )}
       <div className="opacity-0 group-hover:opacity-100 transition-opacity flex-shrink-0 ml-1">
         <FileContextMenu onAction={(action) => onAction(action, file)}>
-          <span className="material-symbols-outlined text-[18px]">more_vert</span>
+          <span className="material-symbols-outlined">more_vert</span>
         </FileContextMenu>
       </div>
     </div>
@@ -82,7 +82,7 @@ function TeamMemberRow({ member, isLast }) {
       </div>
       <div className="text-right">
         <p className="text-sm font-medium text-slate-900 dark:text-white tabular-nums">{member.files}</p>
-        <p className="text-[10px] text-slate-400 dark:text-slate-500">files</p>
+        <p className="text-[10px] text-slate-400 dark:text-slate-500">fichiers</p>
       </div>
     </div>
   )
@@ -111,7 +111,7 @@ function RenameModal({ file, onClose, onRenamed }) {
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
       <div className="relative bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xl w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
         <div className="px-6 py-4 border-b border-slate-100 dark:border-border-dark">
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Rename</h3>
+          <h3 className="text-base font-semibold text-slate-900 dark:text-white">Renommer</h3>
         </div>
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <input
@@ -121,8 +121,8 @@ function RenameModal({ file, onClose, onRenamed }) {
             className="w-full px-3 py-2.5 text-sm rounded-xl border border-slate-200 dark:border-border-dark bg-slate-50 dark:bg-background-dark text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-primary/40"
           />
           <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">Cancel</button>
-            <button type="submit" disabled={loading} className="flex-1 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-blue-600 rounded-xl transition-colors disabled:opacity-50">Rename</button>
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">Annuler</button>
+            <button type="submit" disabled={loading} className="flex-1 py-2.5 text-sm font-semibold text-white bg-primary hover:bg-blue-600 rounded-xl transition-colors disabled:opacity-50">Renommer</button>
           </div>
         </form>
       </div>
@@ -150,13 +150,13 @@ function ConfirmTrashModal({ file, onClose, onTrashed }) {
               <span className="material-symbols-outlined text-red-500">delete</span>
             </div>
             <div>
-              <h3 className="text-base font-semibold text-slate-900 dark:text-white">Move to Trash</h3>
-              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">"{file?.name}" will be moved to trash.</p>
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white">Mettre à la corbeille</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">« {file?.name} » sera déplacé dans la corbeille.</p>
             </div>
           </div>
           <div className="flex gap-2">
-            <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">Cancel</button>
-            <button onClick={handleConfirm} disabled={loading} className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors disabled:opacity-50">Move to Trash</button>
+            <button type="button" onClick={onClose} className="flex-1 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">Annuler</button>
+            <button onClick={handleConfirm} disabled={loading} className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors disabled:opacity-50">Mettre à la corbeille</button>
           </div>
         </div>
       </div>
@@ -167,10 +167,10 @@ function ConfirmTrashModal({ file, onClose, onTrashed }) {
 export default function Dashboard() {
   const { user } = useAuth()
   const [stats, setStats] = useState([
-    { label: 'Total Files', value: '-', change: '', icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
-    { label: 'Storage Used', value: '-', change: '', icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
-    { label: 'Shared Files', value: '-', change: '', icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
-    { label: 'Trash Items', value: '-', change: '', icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
+    { label: 'Fichiers totaux', value: '-', change: '', icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
+    { label: 'Stockage utilisé', value: '-', change: '', icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
+    { label: 'Fichiers partagés', value: '-', change: '', icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
+    { label: 'Corbeille', value: '-', change: '', icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
   ])
   const [storageByType, setStorageByType] = useState([])
   const [storageTotal, setStorageTotal] = useState({ used: '0 GB', limit: '20 GB' })
@@ -199,10 +199,10 @@ export default function Dashboard() {
         const statsData = statsResult.value
         const storageLimit = storageResult.status === 'fulfilled' ? storageResult.value.formatted_limit : '20 GB'
         setStats([
-          { label: 'Total Files', value: statsData.total_files.toLocaleString(), change: statsData.total_files_change, icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
-          { label: 'Storage Used', value: statsData.storage_used, change: `${statsData.storage_percentage}% of ${storageLimit}`, icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
-          { label: 'Shared Files', value: statsData.shared_files.toString(), change: statsData.shared_files_change, icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
-          { label: 'Trash Items', value: statsData.trash_items.toString(), change: `Auto-delete in ${statsData.trash_auto_delete}`, icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
+          { label: 'Fichiers totaux', value: statsData.total_files.toLocaleString(), change: statsData.total_files_change, icon: 'description', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10', changeColor: 'text-green-500' },
+          { label: 'Stockage utilisé', value: statsData.storage_used, change: `${statsData.storage_percentage}% sur ${storageLimit}`, icon: 'cloud', iconColor: 'text-primary', iconBg: 'bg-primary/10', changeColor: 'text-slate-500' },
+          { label: 'Fichiers partagés', value: statsData.shared_files.toString(), change: statsData.shared_files_change, icon: 'group', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10', changeColor: 'text-green-500' },
+          { label: 'Corbeille', value: statsData.trash_items.toString(), change: `Suppression auto dans ${statsData.trash_auto_delete}`, icon: 'delete', iconColor: 'text-red-400', iconBg: 'bg-red-400/10', changeColor: 'text-slate-500' },
         ])
       }
 
@@ -245,7 +245,7 @@ export default function Dashboard() {
           icon_color: f.icon_color,
           icon_bg: f.icon_bg,
           subtitle: f.subtitle,
-          badge: f.is_owner ? null : 'Shared',
+          badge: f.is_owner ? null : 'Partagé',
           parent_id: f.parent_id || null,
           mime_type: f.mime_type || '',
           has_content: f.has_content || false,
@@ -296,13 +296,13 @@ export default function Dashboard() {
       {/* Page Header */}
       <div className="flex items-center justify-between mb-6">
         <div>
-          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Welcome back, {user?.first_name || 'there'}</h2>
-          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Here's what's happening in your workspace</p>
+          <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Bienvenue, {user?.first_name || ''}</h2>
+          <p className="text-sm text-slate-500 dark:text-slate-400 mt-0.5">Voici ce qui se passe dans votre espace</p>
         </div>
         <div className="flex items-center gap-2">
           <button className="flex items-center gap-2 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-[#1f2d3d] transition-colors">
-            <span className="material-symbols-outlined text-[18px]">calendar_today</span>
-            Last 7 days
+            <span className="material-symbols-outlined">calendar_today</span>
+            7 derniers jours
           </button>
         </div>
       </div>
@@ -319,8 +319,8 @@ export default function Dashboard() {
         {/* Storage Breakdown */}
         <div className="lg:col-span-1 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5 flex flex-col">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Storage Breakdown</h3>
-            <Link to="/settings" className="text-xs text-primary hover:text-blue-600 font-medium transition-colors">Manage</Link>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Répartition du stockage</h3>
+            <Link to="/settings" className="text-xs text-primary hover:text-blue-600 font-medium transition-colors">Gérer</Link>
           </div>
 
           {/* Usage bar */}
@@ -353,7 +353,7 @@ export default function Dashboard() {
 
           {/* Total */}
           <div className="mt-auto pt-4 border-t border-slate-200 dark:border-border-dark flex items-center justify-between">
-            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total used</span>
+            <span className="text-sm font-medium text-slate-500 dark:text-slate-400">Total utilisé</span>
             <span className="text-sm font-bold text-slate-900 dark:text-white">{storageTotal.used} / {storageTotal.limit}</span>
           </div>
         </div>
@@ -361,8 +361,8 @@ export default function Dashboard() {
         {/* Activity Feed */}
         <div className="lg:col-span-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Recent Activity</h3>
-            <Link to="/recent" className="text-xs text-primary hover:text-blue-600 font-medium transition-colors">View all</Link>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Activité récente</h3>
+            <Link to="/recent" className="text-xs text-primary hover:text-blue-600 font-medium transition-colors">Tout voir</Link>
           </div>
 
           <div className="space-y-0">
@@ -378,8 +378,8 @@ export default function Dashboard() {
         {/* Quick Access */}
         <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Quick Access</h3>
-            <Link to="/drive" className="text-xs text-primary hover:text-blue-400 hover:underline font-medium transition-colors">My Drive</Link>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Accès rapide</h3>
+            <Link to="/drive" className="text-xs text-primary hover:text-blue-400 hover:underline font-medium transition-colors">Mon Drive</Link>
           </div>
 
           <div className="space-y-0">
@@ -397,8 +397,8 @@ export default function Dashboard() {
         {/* Team Members */}
         <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
-            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Team Members</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500">{onlineCount} online</span>
+            <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Membres de l'équipe</h3>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{onlineCount} en ligne</span>
           </div>
 
           <div className="space-y-0">

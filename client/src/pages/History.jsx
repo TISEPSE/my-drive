@@ -1,56 +1,56 @@
 const historyData = [
   {
-    date: 'Today',
+    date: "Aujourd'hui",
     events: [
-      { time: '11:42 AM', action: 'You edited', target: 'Project_Brief_v3.docx', icon: 'edit_document', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10' },
-      { time: '10:15 AM', action: 'You uploaded', target: 'Hero_Banner_v4.jpg', icon: 'upload_file', iconColor: 'text-green-500', iconBg: 'bg-green-500/10' },
-      { time: '09:30 AM', action: 'Sarah M. shared', target: 'Q4_Kickoff_Deck.pptx', icon: 'share', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10' },
-      { time: '08:45 AM', action: 'You renamed', target: 'Logo_V2.fig (was Logo_Draft.fig)', icon: 'drive_file_rename_outline', iconColor: 'text-orange-500', iconBg: 'bg-orange-500/10' },
+      { time: '11:42', action: 'Vous avez modifié', target: 'Project_Brief_v3.docx', icon: 'edit_document', iconColor: 'text-blue-500', iconBg: 'bg-blue-500/10' },
+      { time: '10:15', action: 'Vous avez importé', target: 'Hero_Banner_v4.jpg', icon: 'upload_file', iconColor: 'text-green-500', iconBg: 'bg-green-500/10' },
+      { time: '09:30', action: 'Sarah M. a partagé', target: 'Q4_Kickoff_Deck.pptx', icon: 'share', iconColor: 'text-indigo-500', iconBg: 'bg-indigo-500/10' },
+      { time: '08:45', action: 'Vous avez renommé', target: 'Logo_V2.fig (était Logo_Draft.fig)', icon: 'drive_file_rename_outline', iconColor: 'text-orange-500', iconBg: 'bg-orange-500/10' },
     ],
   },
   {
-    date: 'Yesterday',
+    date: 'Hier',
     events: [
-      { time: '05:20 PM', action: 'You moved to trash', target: 'Old_Project_Archive_v1.zip', icon: 'delete', iconColor: 'text-red-500', iconBg: 'bg-red-500/10' },
-      { time: '03:10 PM', action: 'Mike R. commented on', target: 'Budget_2024.xlsx', icon: 'comment', iconColor: 'text-teal-500', iconBg: 'bg-teal-500/10' },
-      { time: '01:45 PM', action: 'You downloaded', target: 'Contract_Signed.pdf', icon: 'download', iconColor: 'text-purple-500', iconBg: 'bg-purple-500/10' },
-      { time: '11:00 AM', action: 'You created folder', target: 'Clients', icon: 'create_new_folder', iconColor: 'text-yellow-500', iconBg: 'bg-yellow-500/10' },
+      { time: '17:20', action: 'Vous avez mis à la corbeille', target: 'Old_Project_Archive_v1.zip', icon: 'delete', iconColor: 'text-red-500', iconBg: 'bg-red-500/10' },
+      { time: '15:10', action: 'Mike R. a commenté', target: 'Budget_2024.xlsx', icon: 'comment', iconColor: 'text-teal-500', iconBg: 'bg-teal-500/10' },
+      { time: '13:45', action: 'Vous avez téléchargé', target: 'Contract_Signed.pdf', icon: 'download', iconColor: 'text-purple-500', iconBg: 'bg-purple-500/10' },
+      { time: '11:00', action: 'Vous avez créé le dossier', target: 'Clients', icon: 'create_new_folder', iconColor: 'text-yellow-500', iconBg: 'bg-yellow-500/10' },
     ],
   },
   {
-    date: 'October 25, 2024',
+    date: '25 octobre 2024',
     events: [
-      { time: '04:30 PM', action: 'Jessica P. removed sharing on', target: 'Internal_Memo.pdf', icon: 'person_remove', iconColor: 'text-red-400', iconBg: 'bg-red-400/10' },
-      { time: '02:15 PM', action: 'You restored from trash', target: 'Demo_Recording.mp4', icon: 'restore_from_trash', iconColor: 'text-green-500', iconBg: 'bg-green-500/10' },
-      { time: '10:00 AM', action: 'You locked', target: 'Confidential/NDA_2024.pdf', icon: 'lock', iconColor: 'text-slate-500', iconBg: 'bg-slate-500/10' },
+      { time: '16:30', action: 'Jessica P. a retiré le partage de', target: 'Internal_Memo.pdf', icon: 'person_remove', iconColor: 'text-red-400', iconBg: 'bg-red-400/10' },
+      { time: '14:15', action: 'Vous avez restauré depuis la corbeille', target: 'Demo_Recording.mp4', icon: 'restore_from_trash', iconColor: 'text-green-500', iconBg: 'bg-green-500/10' },
+      { time: '10:00', action: 'Vous avez verrouillé', target: 'Confidential/NDA_2024.pdf', icon: 'lock', iconColor: 'text-slate-500', iconBg: 'bg-slate-500/10' },
     ],
   },
   {
-    date: 'October 22, 2024',
+    date: '22 octobre 2024',
     events: [
-      { time: '06:00 PM', action: 'You made a copy of', target: 'Q3_Report.pdf', icon: 'content_copy', iconColor: 'text-blue-400', iconBg: 'bg-blue-400/10' },
-      { time: '11:30 AM', action: 'David K. shared', target: 'Marketing Assets (folder)', icon: 'folder_shared', iconColor: 'text-yellow-500', iconBg: 'bg-yellow-500/10' },
+      { time: '18:00', action: 'Vous avez copié', target: 'Q3_Report.pdf', icon: 'content_copy', iconColor: 'text-blue-400', iconBg: 'bg-blue-400/10' },
+      { time: '11:30', action: 'David K. a partagé', target: 'Marketing Assets (dossier)', icon: 'folder_shared', iconColor: 'text-yellow-500', iconBg: 'bg-yellow-500/10' },
     ],
   },
 ]
 
 export default function History() {
   return (
-    <div className="flex-1 overflow-y-auto p-6 md:p-8">
+    <div className="flex-1 overflow-y-auto p-6">
       {/* Title */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-3">
           <div className="w-10 h-10 rounded-lg bg-slate-100 dark:bg-surface-dark flex items-center justify-center">
-            <span className="material-symbols-outlined text-xl text-slate-500 dark:text-slate-400">history</span>
+            <span className="material-symbols-outlined text-slate-500 dark:text-slate-400">history</span>
           </div>
           <div>
-            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">History</h2>
-            <p className="text-sm text-slate-500 dark:text-slate-400">A log of all actions across your workspace</p>
+            <h2 className="text-2xl font-bold text-slate-900 dark:text-white">Historique</h2>
+            <p className="text-sm text-slate-500 dark:text-slate-400">Journal de toutes les actions de votre espace</p>
           </div>
         </div>
         <button className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
-          <span className="material-symbols-outlined text-[18px]">filter_list</span>
-          Filter
+          <span className="material-symbols-outlined">filter_list</span>
+          Filtrer
         </button>
       </div>
 
@@ -76,7 +76,7 @@ export default function History() {
                 >
                   {/* Icon */}
                   <div className={`w-8 h-8 rounded-lg ${event.iconBg} flex items-center justify-center flex-shrink-0`}>
-                    <span className={`material-symbols-outlined text-lg ${event.iconColor}`}>{event.icon}</span>
+                    <span className={`material-symbols-outlined text-[16px] ${event.iconColor}`}>{event.icon}</span>
                   </div>
 
                   {/* Content */}
@@ -100,7 +100,7 @@ export default function History() {
       {/* Load more */}
       <div className="mt-8 flex justify-center pb-8">
         <button className="text-sm text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors font-medium">
-          Load more history...
+          Charger plus d'historique...
         </button>
       </div>
     </div>
