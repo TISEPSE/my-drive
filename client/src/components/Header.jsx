@@ -113,8 +113,10 @@ export default function Header() {
             onClick={handleToggle}
             className="flex items-center gap-2 pl-1 pr-3 py-1 rounded-full hover:bg-slate-100 dark:hover:bg-surface-dark transition-colors"
           >
-            <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold">
-              {initials}
+            <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+              {user?.avatar_url
+                ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                : initials}
             </div>
             <span className="text-sm font-medium text-slate-700 dark:text-white hidden sm:block">{displayName}</span>
             <span className="material-symbols-outlined text-slate-400 text-lg leading-none">expand_more</span>
@@ -143,9 +145,16 @@ export default function Header() {
                 }
               `}
             >
-              <div className="px-3.5 py-2 border-b border-slate-100 dark:border-[#2d3b47]">
-                <p className="text-sm font-medium text-slate-900 dark:text-white">{user?.first_name} {user?.last_name}</p>
-                <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+              <div className="px-3.5 py-2.5 border-b border-slate-100 dark:border-[#2d3b47] flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-full bg-slate-600 flex items-center justify-center text-white text-xs font-bold overflow-hidden flex-shrink-0">
+                  {user?.avatar_url
+                    ? <img src={user.avatar_url} alt="" className="w-full h-full object-cover" />
+                    : initials}
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-slate-900 dark:text-white truncate">{user?.first_name} {user?.last_name}</p>
+                  <p className="text-xs text-slate-400 truncate">{user?.email}</p>
+                </div>
               </div>
               <button
                 onClick={() => {

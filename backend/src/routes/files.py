@@ -549,11 +549,24 @@ def download_folder_zip(file_id):
 @files_bp.route('/api/files/starred', methods=['GET'])
 @login_required
 def list_starred():
+    from sqlalchemy import func
     items = File.query.filter_by(
         owner_id=g.current_user_id,
         is_starred=True,
         is_trashed=False,
     ).order_by(File.updated_at.desc()).all()
+
+    # Pre-fetch child counts for all folders in one query (avoid N+1)
+    folder_ids = [f.id for f in items if f.is_folder]
+    child_counts = {}
+    if folder_ids:
+        rows = (
+            db.session.query(File.parent_id, func.count(File.id))
+            .filter(File.parent_id.in_(folder_ids), File.is_trashed == False)
+            .group_by(File.parent_id)
+            .all()
+        )
+        child_counts = {parent_id: count for parent_id, count in rows}
 
     def serialize(f):
         return {
@@ -570,7 +583,7 @@ def list_starred():
             'is_locked': f.is_locked,
             'updated_at': f.updated_at.isoformat() + 'Z' if f.updated_at else None,
             'relative_time': format_relative_time(f.updated_at) if f.updated_at else None,
-            'items_count': File.query.filter_by(parent_id=f.id, is_trashed=False).count() if f.is_folder else None,
+            'items_count': child_counts.get(f.id, 0) if f.is_folder else None,
         }
 
     folders = [serialize(f) for f in items if f.is_folder]
@@ -590,15 +603,30 @@ def list_recent():
         ActivityLog.file_id.isnot(None),
     ).order_by(ActivityLog.created_at.desc()).limit(100).all()
 
+    # Deduplicate file_ids while preserving order
     seen = set()
-    ordered_files = []
+    unique_acts = []
     for act in activities:
-        if act.file_id in seen:
-            continue
-        seen.add(act.file_id)
-        f = db.session.get(File, act.file_id)
-        if f and not f.is_trashed and not f.is_folder:
-            ordered_files.append((f, act))
+        if act.file_id not in seen:
+            seen.add(act.file_id)
+            unique_acts.append(act)
+
+    # Bulk-fetch all files in one query (avoid N+1)
+    file_ids = [act.file_id for act in unique_acts]
+    files_map = {}
+    if file_ids:
+        rows = File.query.filter(
+            File.id.in_(file_ids),
+            File.is_trashed == False,
+            File.is_folder == False,
+        ).all()
+        files_map = {f.id: f for f in rows}
+
+    ordered_files = [
+        (files_map[act.file_id], act)
+        for act in unique_acts
+        if act.file_id in files_map
+    ]
 
     now = datetime.now(timezone.utc)
     today = now.date()
@@ -658,21 +686,33 @@ def list_recent():
 @files_bp.route('/api/files/gallery', methods=['GET'])
 @login_required
 def list_gallery():
-    images = File.query.filter(
+    page = request.args.get('page', 1, type=int)
+    per_page = request.args.get('per_page', 60, type=int)
+
+    query = File.query.filter(
         File.owner_id == g.current_user_id,
         File.is_trashed == False,
         File.is_folder == False,
         File.mime_type.like('image/%'),
-    ).order_by(File.created_at.desc()).all()
+    ).order_by(File.created_at.desc())
 
-    return jsonify({'images': [{
-        'id': f.id,
-        'name': f.name,
-        'mime_type': f.mime_type,
-        'size': f.size,
-        'formatted_size': format_file_size(f.size) if f.size else '--',
-        'created_at': f.created_at.isoformat() + 'Z' if f.created_at else None,
-    } for f in images]})
+    total = query.count()
+    images = query.offset((page - 1) * per_page).limit(per_page).all()
+
+    return jsonify({
+        'images': [{
+            'id': f.id,
+            'name': f.name,
+            'mime_type': f.mime_type,
+            'size': f.size,
+            'formatted_size': format_file_size(f.size) if f.size else '--',
+            'created_at': f.created_at.isoformat() + 'Z' if f.created_at else None,
+        } for f in images],
+        'total': total,
+        'page': page,
+        'per_page': per_page,
+        'has_more': (page * per_page) < total,
+    })
 
 
 @files_bp.route('/api/files/<file_id>/copy', methods=['POST'])

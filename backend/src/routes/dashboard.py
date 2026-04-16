@@ -2,7 +2,7 @@ from flask import Blueprint, request, jsonify, g
 from sqlalchemy import func
 from datetime import datetime, timezone, timedelta
 from src.extensions import db
-from src.models import User, File, ActivityLog
+from src.models import User, File, ActivityLog, SharedFile
 from src.utils import format_file_size, format_relative_time
 from src.auth import login_required
 
@@ -85,9 +85,9 @@ def dashboard_stats():
 def dashboard_activity():
     limit = request.args.get('limit', 6, type=int)
 
-    activities = ActivityLog.query.order_by(
-        ActivityLog.created_at.desc()
-    ).limit(limit).all()
+    activities = ActivityLog.query.filter(
+        ActivityLog.user_id == g.current_user_id
+    ).order_by(ActivityLog.created_at.desc()).limit(limit).all()
 
     result = []
     for act in activities:
@@ -205,7 +205,13 @@ def dashboard_quick_access():
 @dashboard_bp.route('/api/dashboard/team')
 @login_required
 def dashboard_team():
-    members = User.query.filter(User.id != g.current_user_id).all()
+    shared_user_ids = db.session.query(
+        SharedFile.shared_by_id
+    ).filter(SharedFile.shared_with_id == g.current_user_id).union(
+        db.session.query(SharedFile.shared_with_id).filter(SharedFile.shared_by_id == g.current_user_id)
+    ).all()
+    ids = {row[0] for row in shared_user_ids}
+    members = User.query.filter(User.id.in_(ids)).all() if ids else []
 
     result = []
     for m in members:

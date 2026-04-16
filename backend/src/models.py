@@ -19,6 +19,7 @@ class User(db.Model):
     avatar_url = db.Column(db.String(500), nullable=True)
     role = db.Column(db.String(50), default='member')
     is_online = db.Column(db.Boolean, default=False)
+    is_verified = db.Column(db.Boolean, default=False)
     storage_used = db.Column(db.BigInteger, default=0)
     storage_limit = db.Column(db.BigInteger, default=21474836480)  # 20 GB
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
@@ -137,3 +138,29 @@ class GitHubConnection(db.Model):
                            onupdate=lambda: datetime.now(timezone.utc))
 
     user = db.relationship('User', backref=db.backref('github_connection', uselist=False))
+
+
+class EmailVerificationToken(db.Model):
+    __tablename__ = 'email_verification_token'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    token = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship('User', backref=db.backref('verification_tokens', lazy='dynamic'))
+
+
+class PasswordResetToken(db.Model):
+    __tablename__ = 'password_reset_token'
+
+    id = db.Column(db.String(36), primary_key=True, default=generate_uuid)
+    user_id = db.Column(db.String(36), db.ForeignKey('user.id'), nullable=False)
+    token = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    expires_at = db.Column(db.DateTime, nullable=False)
+    used = db.Column(db.Boolean, default=False)
+    created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
+
+    user = db.relationship('User', backref=db.backref('reset_tokens', lazy='dynamic'))

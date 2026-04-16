@@ -82,15 +82,21 @@ export default function Trash() {
         </button>
       </div>
 
+      {/* Loading */}
+      {loading && (
+        <div className="flex items-center justify-center py-20 text-slate-400 dark:text-slate-500">
+          <span className="material-symbols-outlined animate-spin mr-2">progress_activity</span>
+          Chargement...
+        </div>
+      )}
+
       {/* Empty state */}
       {!loading && items.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-24 text-center">
-          <div className="w-14 h-14 rounded-2xl bg-slate-100 dark:bg-surface-dark flex items-center justify-center mb-4">
-            <span className="material-symbols-outlined text-xl text-slate-400">delete_sweep</span>
-          </div>
-          <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">La corbeille est vide</h3>
-          <p className="text-sm text-slate-500 dark:text-slate-400 max-w-xs">
-            Les éléments supprimés apparaissent ici pendant 30 jours avant d'être définitivement retirés.
+        <div className="flex flex-col items-center justify-center py-20 text-center">
+          <span className="material-symbols-outlined text-5xl text-slate-300 dark:text-slate-600 mb-3">delete_sweep</span>
+          <p className="text-slate-500 dark:text-slate-400 font-medium">La corbeille est vide</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500 mt-1">
+            Les éléments supprimés apparaissent ici pendant 30 jours.
           </p>
         </div>
       )}

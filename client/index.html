@@ -34,11 +34,10 @@
         animation: loaderFadeUp 0.5s cubic-bezier(0.16, 1, 0.3, 1) both;
       }
       .loader-cloud-icon {
-        font-family: 'Material Symbols Outlined';
-        font-size: 32px;
+        width: 36px;
+        height: 36px;
         color: #258cf4;
-        font-variation-settings: 'FILL' 1;
-        line-height: 1;
+        flex-shrink: 0;
       }
       .loader-name {
         font-family: 'Inter', system-ui, sans-serif;
@@ -83,7 +82,9 @@
   <body class="bg-background-light dark:bg-background-dark text-slate-900 dark:text-white font-display overflow-hidden">
     <div id="loading-screen">
       <div class="loader-logo">
-        <span class="loader-cloud-icon">cloud</span>
+        <svg class="loader-cloud-icon" viewBox="0 0 24 24" fill="currentColor" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6.5 20q-2.275 0-3.888-1.575Q1 16.85 1 14.575q0-1.95 1.175-3.475 1.175-1.525 3.075-1.95.625-2.3 2.5-3.725Q9.625 4 12 4q2.925 0 4.963 2.038Q19 8.075 19 11q1.725.2 2.863 1.487Q23 13.775 23 15.5q0 1.875-1.312 3.188Q20.375 20 18.5 20Z"/>
+        </svg>
         <span class="loader-name">CloudSpace</span>
       </div>
       <div class="loader-bar-track">

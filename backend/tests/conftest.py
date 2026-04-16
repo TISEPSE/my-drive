@@ -12,11 +12,13 @@ def app():
     os.environ['SECRET_KEY'] = 'test-secret-key-for-pytest-only-do-not-use-in-production'
     os.environ['DATABASE_URL'] = 'sqlite:///:memory:'
     os.environ['UPLOAD_FOLDER'] = '/tmp/cloudspace_test_uploads'
+    os.environ['RATELIMIT_ENABLED'] = 'False'
     os.makedirs('/tmp/cloudspace_test_uploads/files', exist_ok=True)
     os.makedirs('/tmp/cloudspace_test_uploads/avatars', exist_ok=True)
     os.makedirs('/tmp/cloudspace_test_uploads/previews', exist_ok=True)
     app = create_app()
     app.config['TESTING'] = True
+    app.config['RATELIMIT_ENABLED'] = False
     return app
 
 
@@ -44,6 +46,7 @@ def test_user(app, db):
             last_name='User',
             email='testuser@cloudspace.test',
             password_hash=generate_password_hash('testpassword'),
+            is_verified=True,
         )
         _db.session.add(user)
         _db.session.commit()

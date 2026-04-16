@@ -365,11 +365,19 @@ export default function Dashboard() {
             <Link to="/recent" className="text-xs text-primary hover:text-blue-600 font-medium transition-colors">Tout voir</Link>
           </div>
 
-          <div className="space-y-0">
-            {activityFeed.map((item, index) => (
-              <ActivityItem key={item.id} item={item} isLast={index === activityFeed.length - 1} />
-            ))}
-          </div>
+          {activityFeed.length > 0 ? (
+            <div className="space-y-0">
+              {activityFeed.map((item, index) => (
+                <ActivityItem key={item.id} item={item} isLast={index === activityFeed.length - 1} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">history</span>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Aucune activité récente</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Vos actions sur les fichiers apparaîtront ici.</p>
+            </div>
+          )}
         </div>
       </div>
 
@@ -382,30 +390,46 @@ export default function Dashboard() {
             <Link to="/drive" className="text-xs text-primary hover:text-blue-400 hover:underline font-medium transition-colors">Mon Drive</Link>
           </div>
 
-          <div className="space-y-0">
-            {quickAccessFiles.map((file, index) => (
-              <QuickAccessItem
-                key={file.id}
-                file={file}
-                isLast={index === quickAccessFiles.length - 1}
-                onAction={handleQuickAction}
-              />
-            ))}
-          </div>
+          {quickAccessFiles.length > 0 ? (
+            <div className="space-y-0">
+              {quickAccessFiles.map((file, index) => (
+                <QuickAccessItem
+                  key={file.id}
+                  file={file}
+                  isLast={index === quickAccessFiles.length - 1}
+                  onAction={handleQuickAction}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">folder_open</span>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Aucun fichier récent</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Les fichiers que vous ouvrez apparaîtront ici.</p>
+            </div>
+          )}
         </div>
 
         {/* Team Members */}
         <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Membres de l'équipe</h3>
-            <span className="text-xs text-slate-400 dark:text-slate-500">{onlineCount} en ligne</span>
+            <span className="text-xs text-slate-400 dark:text-slate-500">{onlineCount > 0 ? `${onlineCount} en ligne` : ''}</span>
           </div>
 
-          <div className="space-y-0">
-            {teamMembers.map((member, index) => (
-              <TeamMemberRow key={member.name} member={member} isLast={index === teamMembers.length - 1} />
-            ))}
-          </div>
+          {teamMembers.length > 0 ? (
+            <div className="space-y-0">
+              {teamMembers.map((member, index) => (
+                <TeamMemberRow key={member.name} member={member} isLast={index === teamMembers.length - 1} />
+              ))}
+            </div>
+          ) : (
+            <div className="flex flex-col items-center justify-center py-10 text-center">
+              <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">group</span>
+              <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Aucun membre d'équipe</p>
+              <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Les personnes avec qui vous partagez des fichiers apparaîtront ici.</p>
+            </div>
+          )}
         </div>
       </div>
 

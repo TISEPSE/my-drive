@@ -1,6 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
+import { useNavigate } from "react-router-dom";
 import { apiFetch } from "../lib/api";
 import { useTheme } from "../contexts/ThemeContext";
+import { useAuth } from "../contexts/AuthContext";
+import { useToast } from "../contexts/ToastContext";
 
 /* ─── Données ─── */
 
@@ -106,7 +109,106 @@ function SegmentControl({ value, options, onChange }) {
 /* ─── Sections ─── */
 
 function ProfilSection() {
+  const { updateUser, logout } = useAuth()
+  const { showToast } = useToast()
+  const navigate = useNavigate()
   const inputClass = "w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors";
+
+  const [profile, setProfile] = useState(null)
+  const [form, setForm] = useState({ first_name: '', last_name: '', bio: '' })
+  const [saving, setSaving] = useState(false)
+  const [pendingAvatar, setPendingAvatar] = useState(null)
+  const [avatarPreview, setAvatarPreview] = useState(null)
+  const [deleteStep, setDeleteStep] = useState(0)
+  const [deletePassword, setDeletePassword] = useState('')
+  const [deleteError, setDeleteError] = useState('')
+  const [deleting, setDeleting] = useState(false)
+
+  const handleDeleteAccount = async () => {
+    setDeleting(true)
+    setDeleteError('')
+    try {
+      const r = await apiFetch('/api/user/account', {
+        method: 'DELETE',
+        body: JSON.stringify({ password: deletePassword }),
+      })
+      const data = await r.json()
+      if (r.ok) {
+        await logout()
+        navigate('/login', { replace: true })
+      } else {
+        setDeleteError(data.error || 'Erreur lors de la suppression')
+      }
+    } catch {
+      setDeleteError('Erreur réseau')
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  useEffect(() => {
+    apiFetch('/api/user/profile').then(r => r.json()).then(data => {
+      setProfile(data)
+      setForm({ first_name: data.first_name || '', last_name: data.last_name || '', bio: data.bio || '' })
+    }).catch(() => {})
+  }, [])
+
+  // Revoke object URL when component unmounts or preview changes
+  useEffect(() => {
+    return () => { if (avatarPreview) URL.revokeObjectURL(avatarPreview) }
+  }, [avatarPreview])
+
+  const handleAvatarChange = (e) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+    if (avatarPreview) URL.revokeObjectURL(avatarPreview)
+    setPendingAvatar(file)
+    setAvatarPreview(URL.createObjectURL(file))
+  }
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      // Upload avatar first if a new one is pending
+      if (pendingAvatar) {
+        const fd = new FormData()
+        fd.append('avatar', pendingAvatar)
+        const avatarRes = await apiFetch('/api/user/profile/avatar', { method: 'POST', body: fd })
+        const avatarData = await avatarRes.json()
+        if (avatarRes.ok) {
+          setProfile(p => ({ ...p, avatar_url: avatarData.avatar_url }))
+          updateUser({ avatar_url: avatarData.avatar_url })
+          setPendingAvatar(null)
+          setAvatarPreview(null)
+        } else {
+          showToast(avatarData.error || 'Erreur lors de l\'upload de la photo', 'error')
+          setSaving(false)
+          return
+        }
+      }
+
+      // Save profile fields
+      const r = await apiFetch('/api/user/profile', { method: 'PUT', body: JSON.stringify(form) })
+      const data = await r.json()
+      if (r.ok) {
+        setProfile(p => ({ ...p, ...data }))
+        updateUser({ first_name: data.first_name, last_name: data.last_name })
+        showToast('Profil enregistré avec succès')
+      } else {
+        showToast(data.error || 'Erreur lors de la sauvegarde', 'error')
+      }
+    } catch {
+      showToast('Erreur réseau', 'error')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const initials = profile
+    ? `${profile.first_name?.[0] || ''}${profile.last_name?.[0] || ''}`.toUpperCase()
+    : '…'
+
+  const displayAvatar = avatarPreview || profile?.avatar_url
 
   return (
     <div className="space-y-5">
@@ -115,15 +217,29 @@ function ProfilSection() {
 
         {/* Avatar */}
         <div className="flex items-center gap-4 mb-6 pb-6 border-b border-slate-100 dark:border-border-dark">
-          <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-400 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary/20 flex-shrink-0">
-            AD
+          <div className="relative flex-shrink-0">
+            {displayAvatar ? (
+              <img src={displayAvatar} alt="avatar" className="w-20 h-20 rounded-full object-cover shadow-lg" />
+            ) : (
+              <div className="w-20 h-20 rounded-full bg-gradient-to-br from-primary to-blue-400 flex items-center justify-center text-white text-xl font-bold shadow-lg shadow-primary/20">
+                {initials}
+              </div>
+            )}
+            {pendingAvatar && (
+              <div className="absolute -bottom-1 -right-1 w-5 h-5 rounded-full bg-amber-400 border-2 border-white dark:border-surface-dark flex items-center justify-center" title="Non enregistré">
+                <span className="material-symbols-outlined text-white text-[10px]">edit</span>
+              </div>
+            )}
           </div>
           <div>
-            <p className="text-sm font-semibold text-slate-900 dark:text-white">Alex Davidson</p>
-            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">alex.davidson@cloudspace.com</p>
-            <button className="mt-2 text-xs font-medium text-primary hover:text-blue-600 transition-colors">
+            <p className="text-sm font-semibold text-slate-900 dark:text-white">
+              {profile ? `${profile.first_name} ${profile.last_name}` : '…'}
+            </p>
+            <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{profile?.email || ''}</p>
+            <label className="mt-2 inline-block text-xs font-medium text-primary hover:text-blue-600 transition-colors cursor-pointer">
               Changer la photo
-            </button>
+              <input type="file" accept="image/*" className="hidden" onChange={handleAvatarChange} />
+            </label>
           </div>
         </div>
 
@@ -131,34 +247,31 @@ function ProfilSection() {
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Prénom</label>
-              <input type="text" defaultValue="Alex" className={inputClass} />
+              <input type="text" value={form.first_name} onChange={e => setForm(f => ({ ...f, first_name: e.target.value }))} className={inputClass} />
             </div>
             <div>
               <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nom</label>
-              <input type="text" defaultValue="Davidson" className={inputClass} />
+              <input type="text" value={form.last_name} onChange={e => setForm(f => ({ ...f, last_name: e.target.value }))} className={inputClass} />
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Adresse e-mail</label>
             <div className="relative">
               <span className="absolute left-3 top-1/2 -translate-y-1/2 material-symbols-outlined text-slate-400">mail</span>
-              <input type="email" defaultValue="alex.davidson@cloudspace.com" className={`${inputClass} pl-10`} />
+              <input type="email" value={profile?.email || ''} disabled className={`${inputClass} pl-10 opacity-60 cursor-not-allowed`} />
             </div>
           </div>
           <div>
             <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Biographie</label>
-            <textarea rows={3} defaultValue="Lead Designer at CloudSpace." className={`${inputClass} resize-none`} />
+            <textarea rows={3} value={form.bio} onChange={e => setForm(f => ({ ...f, bio: e.target.value }))} className={`${inputClass} resize-none`} />
           </div>
-          <div className="flex justify-end gap-3 pt-2">
-            <button className="px-4 py-2 text-sm font-medium text-slate-500 hover:text-slate-700 dark:text-slate-400 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors">
-              Annuler
-            </button>
+          <div className="flex items-center justify-end gap-3 pt-2">
             <button
-              disabled
-              title="Bientôt disponible — l'API profil est en cours d'implémentation"
-              className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg opacity-50 cursor-not-allowed"
+              onClick={handleSave}
+              disabled={saving}
+              className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Enregistrer
+              {saving ? 'Enregistrement…' : 'Enregistrer'}
             </button>
           </div>
         </div>
@@ -176,66 +289,165 @@ function ProfilSection() {
               <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Action irréversible — toutes vos données seront perdues.</p>
             </div>
           </div>
-          <button className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors">
+          <button
+            onClick={() => setDeleteStep(1)}
+            className="flex-shrink-0 flex items-center gap-1.5 px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 transition-colors"
+          >
             <span className="material-symbols-outlined">delete_forever</span>
             Supprimer
           </button>
         </div>
       </Card>
+
+      {/* Modal suppression — étape 1 : avertissement */}
+      {deleteStep === 1 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => setDeleteStep(0)}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xl w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <div className="p-6">
+              <div className="flex items-center gap-3 mb-4">
+                <div className="w-10 h-10 rounded-full bg-red-100 dark:bg-red-500/10 flex items-center justify-center flex-shrink-0">
+                  <span className="material-symbols-outlined text-red-500" style={{ fontVariationSettings: "'FILL' 1" }}>warning</span>
+                </div>
+                <h3 className="text-base font-semibold text-slate-900 dark:text-white">Supprimer le compte ?</h3>
+              </div>
+              <ul className="space-y-1.5 mb-5 pl-1">
+                {['Tous vos fichiers seront supprimés définitivement', 'Vos partages et activités seront effacés', 'Cette action est irréversible'].map(item => (
+                  <li key={item} className="flex items-start gap-2 text-sm text-slate-600 dark:text-slate-300">
+                    <span className="material-symbols-outlined text-red-400 text-[16px] mt-0.5 flex-shrink-0">close</span>
+                    {item}
+                  </li>
+                ))}
+              </ul>
+              <div className="flex gap-2">
+                <button onClick={() => setDeleteStep(0)} className="flex-1 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">Annuler</button>
+                <button onClick={() => setDeleteStep(2)} className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 rounded-xl transition-colors">Continuer</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal suppression — étape 2 : confirmation mot de passe */}
+      {deleteStep === 2 && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center" onClick={() => { setDeleteStep(0); setDeletePassword(''); setDeleteError('') }}>
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" />
+          <div className="relative bg-white dark:bg-surface-dark rounded-2xl border border-slate-200 dark:border-border-dark shadow-2xl w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <div className="p-6">
+              <h3 className="text-base font-semibold text-slate-900 dark:text-white mb-1">Confirmer la suppression</h3>
+              <p className="text-sm text-slate-500 dark:text-slate-400 mb-4">Saisissez votre mot de passe pour confirmer.</p>
+              {deleteError && (
+                <div className="mb-3 flex items-center gap-2 px-3 py-2 rounded-lg bg-red-500/10 border border-red-500/20">
+                  <span className="material-symbols-outlined text-sm text-red-400" style={{ fontVariationSettings: "'FILL' 1" }}>error</span>
+                  <span className="text-xs text-red-400">{deleteError}</span>
+                </div>
+              )}
+              <input
+                type="password"
+                placeholder="Mot de passe"
+                value={deletePassword}
+                onChange={e => setDeletePassword(e.target.value)}
+                autoFocus
+                className="w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-xl px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-red-500/40 focus:border-red-500 transition-colors mb-4"
+              />
+              <div className="flex gap-2">
+                <button onClick={() => { setDeleteStep(0); setDeletePassword(''); setDeleteError('') }} className="flex-1 py-2.5 text-sm font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-border-dark rounded-xl transition-colors">Annuler</button>
+                <button onClick={handleDeleteAccount} disabled={deleting || !deletePassword} className="flex-1 py-2.5 text-sm font-semibold text-white bg-red-500 hover:bg-red-600 disabled:opacity-50 rounded-xl transition-colors">
+                  {deleting ? 'Suppression…' : 'Supprimer définitivement'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
 
 function SecuriteSection() {
-  const [twoFactor, setTwoFactor] = useState(false);
+  const inputClass = "w-full bg-slate-50 dark:bg-background-dark border border-slate-200 dark:border-border-dark rounded-lg px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-primary/40 focus:border-primary transition-colors";
 
-  const sessions = [
-    { device: 'Chrome sur macOS',    location: 'Paris, France',  current: true,  time: 'Maintenant' },
-    { device: 'Firefox sur Windows', location: 'Lyon, France',   current: false, time: 'Il y a 2h' },
-    { device: 'App iOS CloudSpace',  location: 'Paris, France',  current: false, time: 'Hier' },
-  ];
+  const [showPwForm, setShowPwForm] = useState(false)
+  const [pwForm, setPwForm] = useState({ current_password: '', new_password: '', confirm: '' })
+  const [pwSaving, setPwSaving] = useState(false)
+  const [pwMsg, setPwMsg] = useState('')
+
+  const handlePasswordChange = async () => {
+    setPwMsg('')
+    if (pwForm.new_password !== pwForm.confirm) {
+      setPwMsg('Les mots de passe ne correspondent pas')
+      return
+    }
+    if (pwForm.new_password.length < 8) {
+      setPwMsg('Le mot de passe doit contenir au moins 8 caractères')
+      return
+    }
+    setPwSaving(true)
+    try {
+      const r = await apiFetch('/api/user/password/change', {
+        method: 'POST',
+        body: JSON.stringify({ current_password: pwForm.current_password, new_password: pwForm.new_password }),
+      })
+      const data = await r.json()
+      if (r.ok) {
+        setPwMsg('Mot de passe modifié ✓')
+        setPwForm({ current_password: '', new_password: '', confirm: '' })
+        setTimeout(() => { setPwMsg(''); setShowPwForm(false) }, 2500)
+      } else {
+        setPwMsg(data.error || 'Erreur lors du changement')
+      }
+    } catch {
+      setPwMsg('Erreur réseau')
+    } finally {
+      setPwSaving(false)
+    }
+  }
 
   return (
     <div className="space-y-5">
       <Card>
         <SectionTitle title="Mot de passe et authentification" desc="Gérez votre mot de passe et la double authentification." />
-        <Row label="Mot de passe" desc="Dernière modification il y a 3 mois">
-          <button className="text-sm font-medium text-primary hover:text-blue-600 transition-colors">Modifier</button>
+        <Row label="Mot de passe" desc="Changez votre mot de passe de connexion">
+          <button
+            onClick={() => { setShowPwForm(v => !v); setPwMsg('') }}
+            className="text-sm font-medium text-primary hover:text-blue-600 transition-colors"
+          >
+            {showPwForm ? 'Annuler' : 'Modifier'}
+          </button>
         </Row>
-        <Row label="Double authentification (2FA)" desc="Bientôt disponible — fonctionnalité en cours d'implémentation.">
-          <span title="Bientôt disponible">
-            <Toggle enabled={false} onChange={() => {}} />
-          </span>
-        </Row>
-      </Card>
 
-      <Card>
-        <SectionTitle title="Sessions actives" desc="Appareils actuellement connectés à votre compte." />
-        <div className="space-y-1">
-          {sessions.map(s => (
-            <div key={s.device} className="flex items-center gap-3 py-3 border-b border-slate-100 dark:border-border-dark last:border-b-0">
-              <div className="w-9 h-9 rounded-lg bg-slate-100 dark:bg-background-dark flex items-center justify-center flex-shrink-0">
-                <span className="material-symbols-outlined text-[16px] text-slate-500 dark:text-slate-400">
-                  {s.device.includes('iOS') ? 'phone_iphone' : 'computer'}
-                </span>
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-slate-900 dark:text-white flex items-center gap-2">
-                  {s.device}
-                  {s.current && (
-                    <span className="text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-100 dark:bg-emerald-500/15 px-1.5 py-0.5 rounded-full">
-                      Actuelle
-                    </span>
-                  )}
-                </p>
-                <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">{s.location} · {s.time}</p>
-              </div>
-              {!s.current && (
-                <button className="text-xs font-medium text-red-500 hover:text-red-600 transition-colors">Révoquer</button>
-              )}
+        {showPwForm && (
+          <div className="mt-4 space-y-3 pt-4 border-t border-slate-100 dark:border-border-dark">
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Mot de passe actuel</label>
+              <input type="password" value={pwForm.current_password} onChange={e => setPwForm(f => ({ ...f, current_password: e.target.value }))} className={inputClass} placeholder="••••••••" />
             </div>
-          ))}
-        </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Nouveau mot de passe</label>
+              <input type="password" value={pwForm.new_password} onChange={e => setPwForm(f => ({ ...f, new_password: e.target.value }))} className={inputClass} placeholder="8 caractères minimum" />
+            </div>
+            <div>
+              <label className="block text-xs font-medium text-slate-500 dark:text-slate-400 mb-1.5 uppercase tracking-wider">Confirmer le nouveau mot de passe</label>
+              <input type="password" value={pwForm.confirm} onChange={e => setPwForm(f => ({ ...f, confirm: e.target.value }))} className={inputClass} placeholder="••••••••" />
+            </div>
+            <div className="flex items-center justify-end gap-3 pt-1">
+              {pwMsg && (
+                <span className={`text-xs font-medium ${pwMsg.includes('✓') ? 'text-emerald-500' : 'text-red-500'}`}>{pwMsg}</span>
+              )}
+              <button
+                onClick={handlePasswordChange}
+                disabled={pwSaving}
+                className="px-4 py-2 text-sm font-medium text-white bg-primary rounded-lg hover:bg-blue-600 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {pwSaving ? 'Enregistrement…' : 'Changer le mot de passe'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        <Row label="Authentification à deux facteurs" desc="Bientôt disponible">
+          <span className="text-xs font-medium text-slate-400 bg-slate-200 dark:bg-slate-700 px-2 py-0.5 rounded">Prochainement</span>
+        </Row>
       </Card>
     </div>
   );

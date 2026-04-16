@@ -6,6 +6,7 @@ flask-limiter
 python-dotenv
 werkzeug
 psycopg2-binary
+gunicorn
 PyJWT
 python-magic
 requests

@@ -1,10 +1,52 @@
+import os
+import secrets
+import smtplib
+from datetime import datetime, timezone, timedelta
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
+
 from flask import Blueprint, request, jsonify
 from werkzeug.security import generate_password_hash, check_password_hash
 from src.extensions import db, limiter
-from src.models import User, UserSettings, TokenBlocklist
+from src.models import User, UserSettings, TokenBlocklist, EmailVerificationToken
 from src.auth import generate_access_token, generate_refresh_token, decode_token
 
 auth_bp = Blueprint('auth', __name__)
+
+SMTP_HOST = os.environ.get('SMTP_HOST', '')
+SMTP_PORT = int(os.environ.get('SMTP_PORT', '587'))
+SMTP_USER = os.environ.get('SMTP_USER', '')
+SMTP_PASS = os.environ.get('SMTP_PASS', '')
+SMTP_FROM = os.environ.get('SMTP_FROM', SMTP_USER)
+APP_URL = os.environ.get('APP_URL', 'http://localhost:8080')
+
+
+def _send_verification_email(user_email: str, token: str) -> bool:
+    """Send a verification email. Returns True on success, False on failure."""
+    verify_url = f"{APP_URL}/verify-email?token={token}"
+
+    msg = MIMEMultipart('alternative')
+    msg['Subject'] = 'Vérifiez votre adresse e-mail — CloudSpace'
+    msg['From'] = SMTP_FROM
+    msg['To'] = user_email
+
+    text = f"Bienvenue sur CloudSpace !\n\nCliquez sur ce lien pour vérifier votre e-mail :\n{verify_url}\n\nCe lien expire dans 24 heures."
+    html = f"""
+    <p>Bienvenue sur <strong>CloudSpace</strong> !</p>
+    <p><a href="{verify_url}">Vérifier mon adresse e-mail</a></p>
+    <p>Ce lien expire dans 24 heures.</p>
+    """
+    msg.attach(MIMEText(text, 'plain'))
+    msg.attach(MIMEText(html, 'html'))
+
+    try:
+        with smtplib.SMTP(SMTP_HOST, SMTP_PORT, timeout=10) as smtp:
+            smtp.starttls()
+            smtp.login(SMTP_USER, SMTP_PASS)
+            smtp.sendmail(SMTP_FROM, user_email, msg.as_string())
+        return True
+    except Exception:
+        return False
 
 
 @auth_bp.route('/api/auth/register', methods=['POST'])
@@ -25,18 +67,41 @@ def register():
     if User.query.filter_by(email=email).first():
         return jsonify({'error': 'Email already registered'}), 409
 
+    smtp_enabled = bool(SMTP_HOST)
+
     user = User(
         first_name=first_name,
         last_name=last_name,
         email=email,
         password_hash=generate_password_hash(password),
+        is_verified=not smtp_enabled,  # auto-verify when no SMTP configured
     )
     db.session.add(user)
     db.session.flush()
 
     settings = UserSettings(user_id=user.id, theme='dark')
     db.session.add(settings)
+
+    verification_token = None
+    if smtp_enabled:
+        raw_token = secrets.token_urlsafe(48)
+        ev = EmailVerificationToken(
+            user_id=user.id,
+            token=raw_token,
+            expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+        )
+        db.session.add(ev)
+        db.session.commit()
+        _send_verification_email(email, raw_token)
+        verification_token = raw_token  # returned for self-hosted debug / no-SMTP fallback
+
     db.session.commit()
+
+    if smtp_enabled:
+        return jsonify({
+            'message': 'Account created. Please check your email to verify your account.',
+            'email_verification_required': True,
+        }), 201
 
     access_token = generate_access_token(user.id)
     refresh_token, _ = generate_refresh_token(user.id)
@@ -54,8 +119,76 @@ def register():
     }), 201
 
 
+@auth_bp.route('/api/auth/verify-email', methods=['GET'])
+def verify_email():
+    token = request.args.get('token', '').strip()
+    if not token:
+        return jsonify({'error': 'Token is required'}), 400
+
+    ev = EmailVerificationToken.query.filter_by(token=token, used=False).first()
+    if not ev:
+        return jsonify({'error': 'Invalid or already used token'}), 400
+
+    now = datetime.now(timezone.utc)
+    expires = ev.expires_at
+    if expires.tzinfo is None:
+        expires = expires.replace(tzinfo=timezone.utc)
+    if now > expires:
+        return jsonify({'error': 'Token has expired'}), 400
+
+    ev.used = True
+    user = db.session.get(User, ev.user_id)
+    user.is_verified = True
+    db.session.commit()
+
+    access_token = generate_access_token(user.id)
+    refresh_token, _ = generate_refresh_token(user.id)
+
+    return jsonify({
+        'message': 'Email verified successfully.',
+        'access_token': access_token,
+        'refresh_token': refresh_token,
+        'user': {
+            'id': user.id,
+            'first_name': user.first_name,
+            'last_name': user.last_name,
+            'email': user.email,
+            'role': user.role,
+        },
+    })
+
+
+@auth_bp.route('/api/auth/resend-verification', methods=['POST'])
+@limiter.limit("3 per minute")
+def resend_verification():
+    if not SMTP_HOST:
+        return jsonify({'error': 'Email verification is not enabled on this server'}), 400
+
+    data = request.get_json() or {}
+    email = data.get('email', '').strip().lower()
+    if not email:
+        return jsonify({'error': 'Email is required'}), 400
+
+    user = User.query.filter_by(email=email).first()
+    # Always return 200 to avoid email enumeration
+    if not user or user.is_verified:
+        return jsonify({'message': 'If your account exists and is unverified, a new email was sent.'}), 200
+
+    raw_token = secrets.token_urlsafe(48)
+    ev = EmailVerificationToken(
+        user_id=user.id,
+        token=raw_token,
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=24),
+    )
+    db.session.add(ev)
+    db.session.commit()
+    _send_verification_email(email, raw_token)
+
+    return jsonify({'message': 'If your account exists and is unverified, a new email was sent.'}), 200
+
+
 @auth_bp.route('/api/auth/login', methods=['POST'])
-@limiter.limit("10 per minute")
+@limiter.limit("10 per minute; 50 per hour")
 def login():
     data = request.get_json()
     email = data.get('email', '').strip().lower()
@@ -67,6 +200,12 @@ def login():
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password_hash, password):
         return jsonify({'error': 'Invalid email or password'}), 401
+
+    if not user.is_verified:
+        return jsonify({
+            'error': 'Please verify your email address before logging in.',
+            'email_verification_required': True,
+        }), 403
 
     access_token = generate_access_token(user.id)
     refresh_token, _ = generate_refresh_token(user.id)

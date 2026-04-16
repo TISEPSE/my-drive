@@ -19,6 +19,7 @@ def seed_data():
         bio='Lead Designer at CloudSpace. Loves minimalism and clean code.',
         role='Designer',
         is_online=True,
+        is_verified=True,
         storage_used=16324091904,
         storage_limit=21474836480,
     )
@@ -28,19 +29,19 @@ def seed_data():
         User(id='user-sarah-001', first_name='Sarah', last_name='Miller',
              email='sarah.miller@cloudspace.com',
              password_hash=generate_password_hash('password123'),
-             role='Designer', is_online=True, storage_used=5*1024**3),
+             role='Designer', is_online=True, is_verified=True, storage_used=5*1024**3),
         User(id='user-mike-001', first_name='Mike', last_name='Ross',
              email='mike.ross@cloudspace.com',
              password_hash=generate_password_hash('password123'),
-             role='Finance', is_online=True, storage_used=2*1024**3),
+             role='Finance', is_online=True, is_verified=True, storage_used=2*1024**3),
         User(id='user-jessica-001', first_name='Jessica', last_name='Pearson',
              email='jessica.pearson@cloudspace.com',
              password_hash=generate_password_hash('password123'),
-             role='Manager', is_online=False, storage_used=3*1024**3),
+             role='Manager', is_online=False, is_verified=True, storage_used=3*1024**3),
         User(id='user-david-001', first_name='David', last_name='Kim',
              email='david.kim@cloudspace.com',
              password_hash=generate_password_hash('password123'),
-             role='Marketing', is_online=True, storage_used=8*1024**3),
+             role='Marketing', is_online=True, is_verified=True, storage_used=8*1024**3),
     ]
     db.session.add_all(team)
 

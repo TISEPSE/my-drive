@@ -56,6 +56,8 @@ def create_app():
     from src.extensions import db, migrate, cors, limiter
     db.init_app(app)
     migrate.init_app(app, db)
+    if os.getenv('RATELIMIT_ENABLED', 'True').lower() == 'false':
+        app.config['RATELIMIT_ENABLED'] = False
     limiter.init_app(app)
 
     allowed_origins = os.getenv('ALLOWED_ORIGINS', 'http://localhost:5173').split(',')
@@ -69,7 +71,14 @@ def create_app():
         response.headers['X-XSS-Protection'] = '1; mode=block'
         response.headers['Referrer-Policy'] = 'strict-origin-when-cross-origin'
         response.headers['Strict-Transport-Security'] = 'max-age=31536000; includeSubDomains'
-        response.headers['Content-Security-Policy'] = "default-src 'self'"
+        response.headers['Content-Security-Policy'] = (
+            "default-src 'self'; "
+            "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com; "
+            "font-src 'self' https://fonts.gstatic.com; "
+            "img-src 'self' data: blob: https://i.pravatar.cc; "
+            "script-src 'self' 'unsafe-inline'; "
+            "connect-src 'self'"
+        )
         return response
 
     # Register blueprints

@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Link } from 'react-router-dom'
 import { useAuth } from '../contexts/AuthContext'
 
 export default function Login() {
@@ -88,7 +88,9 @@ export default function Login() {
 
             <div>
               <input
-                type="email"
+                type="text"
+                inputMode="email"
+                autoComplete="email"
                 placeholder="Adresse e-mail"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -128,7 +130,18 @@ export default function Login() {
             </button>
           </form>
 
-          <p className="mt-5 text-center text-sm text-slate-400">
+          {!isRegister && (
+            <p className="mt-3 text-center">
+              <Link
+                to="/forgot-password"
+                className="text-xs text-slate-500 hover:text-primary hover:underline transition-colors"
+              >
+                Mot de passe oublié ?
+              </Link>
+            </p>
+          )}
+
+          <p className="mt-4 text-center text-sm text-slate-400">
             {isRegister ? 'Déjà un compte ?' : "Pas encore de compte ?"}
             <button
               onClick={toggleMode}

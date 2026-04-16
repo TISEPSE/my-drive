@@ -79,16 +79,55 @@ function Lightbox({ photo, onClose, onPrev, onNext }) {
   )
 }
 
+const VIEW_MODES = [
+  { id: 'small',  icon: 'apps',               label: 'Petites' },
+  { id: 'medium', icon: 'grid_view',           label: 'Moyennes' },
+  { id: 'large',  icon: 'view_module',         label: 'Grandes' },
+  { id: 'mosaic', icon: 'auto_awesome_mosaic', label: 'Mosaïque' },
+]
+
 const gridSizes = {
-  small: 'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10',
+  small:  'grid-cols-4 sm:grid-cols-6 md:grid-cols-8 lg:grid-cols-10',
   medium: 'grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8',
-  large: 'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
+  large:  'grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5',
+}
+
+function MosaicCard({ photo, onClick }) {
+  const imgUrl = `/api/files/${photo.id}/download?inline=true`
+  return (
+    <div
+      onClick={() => onClick(photo)}
+      className="group relative break-inside-avoid mb-2 rounded-lg overflow-hidden cursor-pointer border border-slate-200/50 dark:border-border-dark/50 hover:border-primary/40 transition-all"
+    >
+      <img
+        src={imgUrl}
+        alt={photo.name}
+        className="w-full h-auto block"
+        loading="lazy"
+        onError={e => { e.target.style.display = 'none' }}
+      />
+      <div className="absolute inset-0 bg-black/0 group-hover:bg-black/40 transition-all duration-150 flex flex-col justify-between opacity-0 group-hover:opacity-100">
+        <div className="flex justify-end p-1.5">
+          <button
+            onClick={e => e.stopPropagation()}
+            className="w-7 h-7 rounded-full bg-black/30 backdrop-blur-sm flex items-center justify-center hover:bg-black/50 transition-colors"
+          >
+            <span className="material-symbols-outlined text-white text-[16px]">download</span>
+          </button>
+        </div>
+        <div className="px-2 pb-2">
+          <p className="text-[11px] font-medium text-white truncate">{photo.name}</p>
+          <p className="text-[10px] text-white/60">{photo.formatted_size}</p>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 export default function Gallery() {
   const [photos, setPhotos] = useState([])
   const [loading, setLoading] = useState(true)
-  const [gridSize, setGridSize] = useState('medium')
+  const [viewMode, setViewMode] = useState('medium')
   const [selectedPhoto, setSelectedPhoto] = useState(null)
   const fileInputRef = useRef(null)
 
@@ -113,18 +152,19 @@ export default function Gallery() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center rounded-lg border border-slate-200 dark:border-border-dark overflow-hidden">
-            {[{ id: 'small', label: 'S' }, { id: 'medium', label: 'M' }, { id: 'large', label: 'L' }].map(s => (
+          <div className="flex items-center gap-1 bg-slate-100 dark:bg-surface-dark rounded-lg p-1">
+            {VIEW_MODES.map(mode => (
               <button
-                key={s.id}
-                onClick={() => setGridSize(s.id)}
-                className={`px-3 py-1.5 text-sm font-medium transition-colors ${
-                  gridSize === s.id
-                    ? 'text-primary bg-primary/5 dark:bg-primary/10'
-                    : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'
+                key={mode.id}
+                onClick={() => setViewMode(mode.id)}
+                title={mode.label}
+                className={`w-8 h-8 rounded-md flex items-center justify-center transition-colors ${
+                  viewMode === mode.id
+                    ? 'bg-white dark:bg-slate-700 text-slate-900 dark:text-white shadow-sm'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
                 }`}
               >
-                {s.label}
+                <span className="material-symbols-outlined text-[18px] leading-none">{mode.icon}</span>
               </button>
             ))}
           </div>
@@ -157,11 +197,19 @@ export default function Gallery() {
       )}
 
       {!loading && photos.length > 0 && (
-        <div className={`grid ${gridSizes[gridSize]} gap-2`}>
-          {photos.map(photo => (
-            <PhotoCard key={photo.id} photo={photo} gridSize={gridSize} onClick={setSelectedPhoto} />
-          ))}
-        </div>
+        viewMode === 'mosaic' ? (
+          <div className="columns-2 sm:columns-3 md:columns-4 lg:columns-5 gap-2">
+            {photos.map(photo => (
+              <MosaicCard key={photo.id} photo={photo} onClick={setSelectedPhoto} />
+            ))}
+          </div>
+        ) : (
+          <div className={`grid ${gridSizes[viewMode]} gap-2`}>
+            {photos.map(photo => (
+              <PhotoCard key={photo.id} photo={photo} onClick={setSelectedPhoto} />
+            ))}
+          </div>
+        )
       )}
 
       <Lightbox

@@ -79,8 +79,8 @@ export default function SharedWithMe() {
                             {item.is_folder ? 'folder' : item.icon}
                           </span>
                         </div>
-                        <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-white dark:bg-surface-dark rounded-full flex items-center justify-center shadow-sm">
-                          <span className="material-symbols-outlined text-blue-500 text-[11px]">group</span>
+                        <div className="absolute -bottom-1 -right-1 w-3.5 h-3.5 bg-slate-200 dark:bg-slate-600 rounded-full flex items-center justify-center">
+                          <span className="material-symbols-outlined text-slate-400 dark:text-slate-300 text-[9px]">group</span>
                         </div>
                       </div>
                       <div className="min-w-0">

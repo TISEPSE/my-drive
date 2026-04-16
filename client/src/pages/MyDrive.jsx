@@ -486,12 +486,10 @@ function DriveToolbar({ breadcrumbs, view, onViewChange, onNewFolder, fileInputR
               return (
                 <li key="root" className="inline-flex items-center">
                   {isLast ? (
-                    <span className="inline-flex items-center text-sm font-bold text-slate-900 dark:text-white">
-                      <span className="material-symbols-outlined text-xl mr-1.5">cloud</span>My Drive
-                    </span>
+                    <span className="text-2xl font-bold text-slate-900 dark:text-white">Mon Drive</span>
                   ) : (
                     <Link to="/drive" className="inline-flex items-center text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">
-                      <span className="material-symbols-outlined text-xl mr-1.5">cloud</span>My Drive
+                      Mon Drive
                     </Link>
                   )}
                 </li>
@@ -501,7 +499,7 @@ function DriveToolbar({ breadcrumbs, view, onViewChange, onNewFolder, fileInputR
               <li key={crumb.id} className="inline-flex items-center">
                 <span className="material-symbols-outlined text-slate-400 text-xl mx-0.5">chevron_right</span>
                 {isLast ? (
-                  <span className="text-sm font-bold text-slate-900 dark:text-white">{crumb.name}</span>
+                  <span className="text-2xl font-bold text-slate-900 dark:text-white">{crumb.name}</span>
                 ) : (
                   <Link to={`/drive/folder/${crumb.id}`} className="text-sm font-medium text-slate-500 hover:text-primary dark:text-slate-400 dark:hover:text-white transition-colors">{crumb.name}</Link>
                 )}
@@ -514,11 +512,11 @@ function DriveToolbar({ breadcrumbs, view, onViewChange, onNewFolder, fileInputR
       <div className="flex items-center gap-2">
         <button onClick={onNewFolder} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark hover:text-primary transition-colors">
           <span className="material-symbols-outlined">create_new_folder</span>
-          New folder
+          Nouveau dossier
         </button>
         <button onClick={() => fileInputRef.current?.click()} className="flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-slate-600 dark:text-slate-300 border border-slate-200 dark:border-border-dark rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark hover:text-primary transition-colors">
           <span className="material-symbols-outlined">upload</span>
-          Upload
+          Importer
         </button>
         <input ref={fileInputRef} type="file" multiple className="hidden" onChange={onFileSelect} />
 
@@ -871,10 +869,37 @@ export default function MyDrive() {
         onFileSelect={handleFileInputChange}
       />
 
-      {/* Folders - only in grid view */}
-      {view === 'grid' && (
+      {/* Empty state — drive vide */}
+      {folders.length === 0 && files.length === 0 && (
+        <div className="flex flex-col items-center justify-center py-28 text-center">
+          <span className="material-symbols-outlined text-6xl text-slate-300 dark:text-slate-600 mb-4">cloud_upload</span>
+          <p className="text-base font-semibold text-slate-600 dark:text-slate-300 mb-1">Ce dossier est vide</p>
+          <p className="text-sm text-slate-400 dark:text-slate-500 mb-6">
+            Déposez des fichiers ici ou utilisez les boutons ci-dessus pour commencer.
+          </p>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={() => fileInputRef.current?.click()}
+              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-blue-600 text-white text-sm font-semibold rounded-lg transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">upload_file</span>
+              Uploader des fichiers
+            </button>
+            <button
+              onClick={() => setShowCreateFolder(true)}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark text-slate-700 dark:text-slate-200 text-sm font-semibold rounded-lg hover:bg-slate-50 dark:hover:bg-border-dark transition-colors"
+            >
+              <span className="material-symbols-outlined text-[18px]">create_new_folder</span>
+              Nouveau dossier
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Folders - only in grid view, only if there are folders */}
+      {view === 'grid' && folders.length > 0 && (
         <section className="mb-8">
-          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Folders</h3>
+          <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">Dossiers</h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
             {folders.map((folder) => (
               <FolderCard key={folder.id} folder={folder} onOpen={handleFolderClick} onAction={handleFolderAction} />
@@ -884,28 +909,34 @@ export default function MyDrive() {
       )}
 
       {/* Files */}
-      <section>
-        <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">
-          {view === 'grid' ? 'Files' : 'All items'}
-        </h3>
+      {(folders.length > 0 || files.length > 0) && (
+        <section>
+          {(view === 'grid' ? files.length > 0 : true) && (
+            <h3 className="text-xs font-bold text-slate-500 dark:text-slate-400 mb-3 uppercase tracking-wider">
+              {view === 'grid' ? 'Fichiers' : 'Tous les éléments'}
+            </h3>
+          )}
 
-        {view === 'grid' ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-            {files.map((file) => (
-              <FileCard key={file.id} file={file} onPreview={setPreviewFile} onAction={handleFileAction} />
-            ))}
-          </div>
-        ) : (
-          <DriveListSection
-            folders={folders}
-            files={files}
-            onFolderOpen={handleFolderClick}
-            onFilePreview={setPreviewFile}
-            onFileAction={handleFileAction}
-            onFolderAction={handleFolderAction}
-          />
-        )}
-      </section>
+          {view === 'grid' ? (
+            files.length > 0 ? (
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+                {files.map((file) => (
+                  <FileCard key={file.id} file={file} onPreview={setPreviewFile} onAction={handleFileAction} />
+                ))}
+              </div>
+            ) : folders.length > 0 ? null : null
+          ) : (
+            <DriveListSection
+              folders={folders}
+              files={files}
+              onFolderOpen={handleFolderClick}
+              onFilePreview={setPreviewFile}
+              onFileAction={handleFileAction}
+              onFolderAction={handleFolderAction}
+            />
+          )}
+        </section>
+      )}
 
       {/* Create Folder Modal */}
       <CreateFolderModal

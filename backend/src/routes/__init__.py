@@ -9,6 +9,8 @@ from src.routes.github import github_bp
 from src.routes.history import history_bp
 from src.routes.sharing import sharing_bp
 from src.routes.search import search_bp
+from src.routes.profile import profile_bp
+from src.routes.password_reset import password_reset_bp
 
 
 def register_blueprints(app):
@@ -23,3 +25,5 @@ def register_blueprints(app):
     app.register_blueprint(history_bp)
     app.register_blueprint(sharing_bp)
     app.register_blueprint(search_bp)
+    app.register_blueprint(profile_bp)
+    app.register_blueprint(password_reset_bp)
