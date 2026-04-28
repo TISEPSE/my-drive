@@ -195,15 +195,15 @@ def login():
     password = data.get('password', '')
 
     if not email or not password:
-        return jsonify({'error': 'Email and password are required'}), 400
+        return jsonify({'error': 'L\'email et le mot de passe sont requis'}), 400
 
     user = User.query.filter_by(email=email).first()
     if not user or not check_password_hash(user.password_hash, password):
-        return jsonify({'error': 'Invalid email or password'}), 401
+        return jsonify({'error': 'Email ou mot de passe incorrect'}), 401
 
     if not user.is_verified:
         return jsonify({
-            'error': 'Please verify your email address before logging in.',
+            'error': 'Veuillez vérifier votre adresse e-mail avant de vous connecter.',
             'email_verification_required': True,
         }), 403
 
@@ -219,6 +219,7 @@ def login():
             'last_name': user.last_name,
             'email': user.email,
             'role': user.role,
+            'avatar_url': user.avatar_url,
         },
     })
 

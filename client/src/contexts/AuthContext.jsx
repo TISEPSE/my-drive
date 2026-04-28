@@ -1,7 +1,8 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { getAccessToken, getRefreshToken, setTokens, clearTokens } from '../lib/api'
+import { getAccessToken, getRefreshToken, setTokens, clearTokens, getSessionUser, setSessionUser, apiFetch } from '../lib/api'
 
 const AuthContext = createContext(null)
+const PROFILES_KEY = 'cloudspace_saved_profiles'
 
 export function useAuth() {
   return useContext(AuthContext)
@@ -17,9 +18,54 @@ function parseJwtPayload(token) {
   }
 }
 
+function loadSavedProfiles() {
+  try {
+    const s = localStorage.getItem(PROFILES_KEY)
+    return s ? JSON.parse(s) : []
+  } catch {
+    return []
+  }
+}
+
+function persistProfiles(profiles) {
+  localStorage.setItem(PROFILES_KEY, JSON.stringify(profiles))
+}
+
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
+  const [savedProfiles, setSavedProfiles] = useState(loadSavedProfiles)
+
+  const saveProfile = useCallback((userData) => {
+    setSavedProfiles(prev => {
+      const filtered = prev.filter(p => p.email !== userData.email)
+      const profile = {
+        id: userData.id,
+        email: userData.email,
+        first_name: userData.first_name,
+        last_name: userData.last_name,
+        avatar_url: userData.avatar_url || null,
+      }
+      const next = [profile, ...filtered]
+      persistProfiles(next)
+      return next
+    })
+  }, [])
+
+  const fetchAndSetProfile = useCallback(async (fallbackUser) => {
+    try {
+      const res = await apiFetch('/api/user/profile')
+      if (res.ok) {
+        const profile = await res.json()
+        const merged = { ...fallbackUser, ...profile }
+        setUser(merged)
+        setSessionUser(merged)
+        saveProfile(merged)
+        return
+      }
+    } catch { /* ignore, fall back to cached */ }
+    if (fallbackUser) setUser(fallbackUser)
+  }, [saveProfile])
 
   useEffect(() => {
     const token = getAccessToken()
@@ -28,9 +74,8 @@ export function AuthProvider({ children }) {
     if (token) {
       const payload = parseJwtPayload(token)
       if (payload && payload.exp * 1000 > Date.now()) {
-        const stored = localStorage.getItem('cloudspace_user')
-        if (stored) setUser(JSON.parse(stored))
-        setLoading(false)
+        const sessionUser = getSessionUser()
+        fetchAndSetProfile(sessionUser).finally(() => setLoading(false))
         return
       }
     }
@@ -44,14 +89,22 @@ export function AuthProvider({ children }) {
         .then(r => r.ok ? r.json() : Promise.reject())
         .then(data => {
           setTokens(data.access_token, null)
-          const stored = localStorage.getItem('cloudspace_user')
-          if (stored) setUser(JSON.parse(stored))
+          const sessionUser = getSessionUser()
+          return fetchAndSetProfile(sessionUser)
         })
         .catch(() => clearTokens())
         .finally(() => setLoading(false))
     } else {
       setLoading(false)
     }
+  }, [fetchAndSetProfile])
+
+  const removeSavedProfile = useCallback((email) => {
+    setSavedProfiles(prev => {
+      const next = prev.filter(p => p.email !== email)
+      persistProfiles(next)
+      return next
+    })
   }, [])
 
   const login = useCallback(async (email, password) => {
@@ -64,10 +117,11 @@ export function AuthProvider({ children }) {
     if (!res.ok) throw new Error(data.error || 'Login failed')
 
     setTokens(data.access_token, data.refresh_token)
-    localStorage.setItem('cloudspace_user', JSON.stringify(data.user))
+    setSessionUser(data.user)
+    saveProfile(data.user)
     setUser(data.user)
     return data.user
-  }, [])
+  }, [saveProfile])
 
   const register = useCallback(async (firstName, lastName, email, password) => {
     const res = await fetch('/api/auth/register', {
@@ -79,10 +133,11 @@ export function AuthProvider({ children }) {
     if (!res.ok) throw new Error(data.error || 'Registration failed')
 
     setTokens(data.access_token, data.refresh_token)
-    localStorage.setItem('cloudspace_user', JSON.stringify(data.user))
+    setSessionUser(data.user)
+    saveProfile(data.user)
     setUser(data.user)
     return data.user
-  }, [])
+  }, [saveProfile])
 
   const logout = useCallback(async () => {
     const refresh = getRefreshToken()
@@ -100,13 +155,18 @@ export function AuthProvider({ children }) {
   const updateUser = useCallback((updates) => {
     setUser(prev => {
       const next = { ...prev, ...updates }
-      localStorage.setItem('cloudspace_user', JSON.stringify(next))
+      setSessionUser(next)
+      saveProfile(next)
       return next
     })
-  }, [])
+  }, [saveProfile])
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser, isAuthenticated: !!user }}>
+    <AuthContext.Provider value={{
+      user, loading, login, register, logout, updateUser,
+      isAuthenticated: !!user,
+      savedProfiles, removeSavedProfile,
+    }}>
       {children}
     </AuthContext.Provider>
   )

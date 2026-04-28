@@ -2,6 +2,7 @@ import { Routes, Route, Navigate } from 'react-router-dom'
 import Layout from './components/Layout'
 import ProtectedRoute from './components/ProtectedRoute'
 import Login from './pages/Login'
+import AccountSelector from './pages/AccountSelector'
 import ForgotPassword from './pages/ForgotPassword'
 import Dashboard from './pages/Dashboard'
 import MyDrive from './pages/MyDrive'
@@ -19,6 +20,7 @@ import GitHub from './pages/GitHub'
 function App() {
   return (
     <Routes>
+      <Route path="/accounts" element={<AccountSelector />} />
       <Route path="/login" element={<Login />} />
       <Route path="/forgot-password" element={<ForgotPassword />} />
       <Route path="/" element={

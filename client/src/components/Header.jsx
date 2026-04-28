@@ -73,7 +73,7 @@ export default function Header() {
     setTimeout(async () => {
       setMenuOpen(false)
       await logout()
-      navigate('/login', { replace: true })
+      navigate('/accounts', { replace: true })
     }, 150)
   }
 

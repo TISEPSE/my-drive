@@ -384,7 +384,7 @@ export default function Dashboard() {
       {/* Bottom Grid: Quick Access + Team */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {/* Quick Access */}
-        <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
+        <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5 flex flex-col min-h-[220px]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Accès rapide</h3>
             <Link to="/drive" className="text-xs text-primary hover:text-blue-400 hover:underline font-medium transition-colors">Mon Drive</Link>
@@ -402,7 +402,7 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
               <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">folder_open</span>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Aucun fichier récent</p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Les fichiers que vous ouvrez apparaîtront ici.</p>
@@ -411,7 +411,7 @@ export default function Dashboard() {
         </div>
 
         {/* Team Members */}
-        <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5">
+        <div className="bg-white dark:bg-surface-dark border border-slate-200 dark:border-border-dark rounded-xl p-5 flex flex-col min-h-[220px]">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-sm font-semibold text-slate-900 dark:text-white">Membres de l'équipe</h3>
             <span className="text-xs text-slate-400 dark:text-slate-500">{onlineCount > 0 ? `${onlineCount} en ligne` : ''}</span>
@@ -424,7 +424,7 @@ export default function Dashboard() {
               ))}
             </div>
           ) : (
-            <div className="flex flex-col items-center justify-center py-10 text-center">
+            <div className="flex-1 flex flex-col items-center justify-center text-center">
               <span className="material-symbols-outlined text-4xl text-slate-300 dark:text-slate-600 mb-2">group</span>
               <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Aucun membre d'équipe</p>
               <p className="text-xs text-slate-400 dark:text-slate-500 mt-1">Les personnes avec qui vous partagez des fichiers apparaîtront ici.</p>

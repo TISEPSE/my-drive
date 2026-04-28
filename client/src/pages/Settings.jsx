@@ -11,7 +11,6 @@ const sections = [
   { id: "profil",        label: "Profil",         icon: "person" },
   { id: "securite",      label: "Sécurité",        icon: "shield" },
   { id: "apparence",     label: "Apparence",       icon: "palette" },
-  { id: "notifications", label: "Notifications",   icon: "notifications" },
   { id: "stockage",      label: "Stockage",        icon: "cloud" },
   { id: "integrations",  label: "Intégrations",    icon: "sync" },
 ];
@@ -458,14 +457,26 @@ function ThemeCard({ theme, isActive, onSelect }) {
   return (
     <button
       onClick={onSelect}
-      className={`relative flex flex-col rounded-xl overflow-hidden border-2 transition-all text-left w-full h-full ${
+      className={`group relative flex flex-col rounded-xl overflow-hidden border-2 transition-all duration-150 text-left w-full h-full ${
         isActive
-          ? 'border-primary shadow-lg shadow-primary/20'
-          : 'border-slate-200 dark:border-border-dark hover:border-slate-300 dark:hover:border-slate-600'
+          ? 'border-primary ring-2 ring-primary/30 shadow-lg shadow-primary/20'
+          : 'border-slate-200 dark:border-border-dark hover:border-primary/50 hover:shadow-md hover:scale-[1.02]'
       }`}
     >
       {/* Miniature */}
-      <div className="flex-1 flex" style={{ background: p.bg }}>
+      <div className="relative flex-1 flex" style={{ background: p.bg }}>
+        {/* Overlay check (actif) ou hover hint */}
+        <div className={`absolute inset-0 flex items-center justify-center z-10 transition-all duration-150 ${
+          isActive
+            ? 'bg-black/25'
+            : 'bg-black/0 group-hover:bg-black/10'
+        }`}>
+          <span className={`material-symbols-outlined text-white drop-shadow transition-all duration-150 ${
+            isActive
+              ? 'text-[32px] opacity-100'
+              : 'text-[28px] opacity-0 group-hover:opacity-40'
+          }`} style={{ fontVariationSettings: "'FILL' 1" }}>check_circle</span>
+        </div>
         <div className="w-[22%] flex flex-col gap-[3px] p-[5px]" style={{ background: p.sidebar }}>
           <div className="h-[5px] w-[60%] rounded-sm" style={{ background: p.accent, opacity: 0.8 }} />
           <div className="h-[3px] w-[80%] rounded-sm mt-[3px]" style={{ background: p.header }} />
@@ -489,11 +500,6 @@ function ThemeCard({ theme, isActive, onSelect }) {
           {theme.isSystem && <span className="material-symbols-outlined text-[13px] text-slate-400">computer</span>}
           {theme.name}
         </p>
-        {isActive && (
-          <div className="w-5 h-5 rounded-full bg-primary flex items-center justify-center">
-            <span className="material-symbols-outlined text-white text-[13px]">check</span>
-          </div>
-        )}
       </div>
     </button>
   );
@@ -504,6 +510,12 @@ function ApparenceSection() {
   const [fontSize, setFontSize] = useState('medium');
   const [compactMode, setCompactMode] = useState(false);
   const [sidebarPos, setSidebarPos] = useState('left');
+  const [sidebarHover, setSidebarHoverRaw] = useState(false);
+  const setSidebarHover = (v) => {
+    setSidebarHoverRaw(v);
+    window.dispatchEvent(new CustomEvent('localPrefChange', { detail: { key: 'cloudspace_sidebar_hover', value: v } }));
+    save({ sidebar_hover: v });
+  };
 
   useEffect(() => {
     apiFetch('/api/settings/appearance')
@@ -513,6 +525,7 @@ function ApparenceSection() {
         if (data.font_size) setFontSize(data.font_size);
         if (data.compact_mode !== undefined) setCompactMode(data.compact_mode);
         if (data.sidebar_position) setSidebarPos(data.sidebar_position);
+        if (data.sidebar_hover !== undefined) setSidebarHoverRaw(data.sidebar_hover);
       })
       .catch(() => {});
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -565,6 +578,12 @@ function ApparenceSection() {
             options={[{ value: 'left', label: 'Gauche' }, { value: 'right', label: 'Droite' }]}
             onChange={v => { setSidebarPos(v); save({ sidebar_position: v }); }}
           />
+        </Row>
+        <Row
+          label="Barre latérale rétractable"
+          desc="Réduite aux icônes, s'ouvre au survol"
+        >
+          <Toggle enabled={sidebarHover} onChange={() => setSidebarHover(!sidebarHover)} />
         </Row>
       </Card>
     </div>
@@ -714,12 +733,32 @@ function StockageSection() {
 
 function IntegrationsSection() {
   const [autoBackup, setAutoBackup] = useState(true);
+  const [githubStatus, setGithubStatus] = useState(null);
 
-  const services = [
-    { id: 'google-drive', name: 'Google Drive', logo: '/google-drive.svg',         desc: 'Synchroniser avec votre compte Google', connected: true,  lastSync: 'Il y a 2h' },
-    { id: 'dropbox',      name: 'Dropbox',      logo: '/dropbox.svg',              desc: 'Connecter votre stockage Dropbox',      connected: true,  lastSync: 'Hier' },
-    { id: 'onedrive',     name: 'OneDrive',     logo: '/microsoft-onedrive.svg',   desc: 'Synchroniser avec Microsoft OneDrive',  connected: false },
-    { id: 'github',       name: 'GitHub',       logo: '/github.svg',               desc: 'Accéder et sauvegarder vos dépôts',     connected: false },
+  useEffect(() => {
+    apiFetch('/api/github/status')
+      .then(r => r.json())
+      .then(data => setGithubStatus(data))
+      .catch(() => setGithubStatus({ connected: false }));
+  }, []);
+
+  const handleGithubConnect = async () => {
+    try {
+      const res = await apiFetch('/api/github/auth-url');
+      const data = await res.json();
+      if (res.ok) window.location.href = data.url;
+    } catch {}
+  };
+
+  const handleGithubDisconnect = async () => {
+    await apiFetch('/api/github/disconnect', { method: 'DELETE' });
+    setGithubStatus({ connected: false });
+  };
+
+  const staticServices = [
+    { id: 'google-drive', name: 'Google Drive', logo: '/google-drive.svg', desc: 'Synchroniser avec votre compte Google', connected: true,  lastSync: 'Il y a 2h' },
+    { id: 'dropbox',      name: 'Dropbox',      logo: '/dropbox.svg',      desc: 'Connecter votre stockage Dropbox',      connected: true,  lastSync: 'Hier' },
+    { id: 'onedrive',     name: 'OneDrive',     logo: '/microsoft-onedrive.svg', desc: 'Synchroniser avec Microsoft OneDrive', connected: false },
   ];
 
   return (
@@ -727,10 +766,50 @@ function IntegrationsSection() {
       <Card>
         <SectionTitle title="Services connectés" desc="Gérez vos connexions aux services de stockage cloud." />
         <div className="divide-y divide-slate-100 dark:divide-border-dark">
-          {services.map(s => (
-            <div key={s.id} className="flex items-center gap-4 py-4 first:pt-0 last:pb-0">
+          {/* GitHub — connexion réelle */}
+          <div className="flex items-center gap-4 py-4 first:pt-0">
+            <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-background-dark border border-slate-100 dark:border-border-dark flex items-center justify-center flex-shrink-0">
+              <img src="/github.svg" alt="GitHub" className="w-6 h-6 dark:invert" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2">
+                <p className="text-sm font-medium text-slate-900 dark:text-white">GitHub</p>
+                {githubStatus?.connected && (
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-600 dark:text-emerald-400 bg-emerald-50 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full">
+                    <span className="w-1 h-1 rounded-full bg-emerald-500" />
+                    Connecté
+                  </span>
+                )}
+              </div>
+              <p className="text-xs text-slate-500 dark:text-slate-400 mt-0.5">
+                {githubStatus?.connected
+                  ? `@${githubStatus.username}${githubStatus.name ? ` · ${githubStatus.name}` : ''}`
+                  : 'Accéder et sauvegarder vos dépôts'}
+              </p>
+            </div>
+            {githubStatus === null ? (
+              <div className="w-20 h-7 rounded-lg bg-slate-100 dark:bg-border-dark animate-pulse" />
+            ) : githubStatus.connected ? (
+              <button
+                onClick={handleGithubDisconnect}
+                className="text-[13px] font-medium text-slate-600 dark:text-slate-300 px-3.5 py-1.5 rounded-lg border border-slate-200 dark:border-border-dark hover:border-red-300 hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-500/5 transition-all"
+              >
+                Déconnecter
+              </button>
+            ) : (
+              <button
+                onClick={handleGithubConnect}
+                className="text-[13px] font-medium text-white bg-primary px-4 py-1.5 rounded-lg hover:bg-blue-600 transition-colors"
+              >
+                Connecter
+              </button>
+            )}
+          </div>
+
+          {staticServices.map(s => (
+            <div key={s.id} className="flex items-center gap-4 py-4 last:pb-0">
               <div className="w-10 h-10 rounded-xl bg-slate-50 dark:bg-background-dark border border-slate-100 dark:border-border-dark flex items-center justify-center flex-shrink-0">
-                <img src={s.logo} alt={s.name} className={`w-6 h-6 ${s.id === 'github' ? 'dark:invert' : ''}`} />
+                <img src={s.logo} alt={s.name} className="w-6 h-6" />
               </div>
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-2">
@@ -820,7 +899,7 @@ export default function Settings() {
           {active === 'profil'        && <ProfilSection />}
           {active === 'securite'      && <SecuriteSection />}
           {active === 'apparence'     && <ApparenceSection />}
-          {active === 'notifications' && <NotificationsSection />}
+
           {active === 'stockage'      && <StockageSection />}
           {active === 'integrations'  && <IntegrationsSection />}
         </div>

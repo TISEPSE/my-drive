@@ -20,6 +20,7 @@ def get_appearance():
         'font_size': s.font_size,
         'compact_mode': s.compact_mode,
         'sidebar_position': s.sidebar_position,
+        'sidebar_hover': s.sidebar_hover,
     })
 
 
@@ -40,6 +41,8 @@ def update_appearance():
         s.compact_mode = data['compact_mode']
     if 'sidebar_position' in data:
         s.sidebar_position = data['sidebar_position']
+    if 'sidebar_hover' in data:
+        s.sidebar_hover = data['sidebar_hover']
 
     db.session.commit()
 
@@ -48,4 +51,5 @@ def update_appearance():
         'font_size': s.font_size,
         'compact_mode': s.compact_mode,
         'sidebar_position': s.sidebar_position,
+        'sidebar_hover': s.sidebar_hover,
     })
